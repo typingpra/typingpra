@@ -13,6 +13,26 @@ const Typing = {
 		return /[^\x00-\x7F]/.test(char);
 	},
 
+	// 行が2バイト文字のみで構成されているかを判定
+	isLineOnlyMultiByte(line) {
+		// 空行の場合はfalse
+		if (line.trim() === "") {
+			return false;
+		}
+
+		// 行の各文字をチェック
+		for (let i = 0; i < line.length; i++) {
+			const char = line[i];
+			// 空白文字以外でASCII文字が含まれている場合はfalse
+			if (!this.isMultiByteChar(char) && char !== " " && char !== "\t") {
+				return false;
+			}
+		}
+
+		// すべての非空白文字が2バイト文字の場合はtrue
+		return true;
+	},
+
 	// 現在のモードがTypeWellモードかどうかを判定
 	isTypeWellMode() {
 		if (DOM.langSel.value === "typewell") {
@@ -68,8 +88,8 @@ const Typing = {
 			currentPage.push({ line, idx });
 			currentPageCharCount += lineCharCount;
 
-			// 非空白行の場合はカウントを増やす
-			if (line.trim() !== "") {
+			// 非空白行で、かつ2バイト文字のみの行ではない場合はカウントを増やす
+			if (line.trim() !== "" && !this.isLineOnlyMultiByte(line)) {
 				nonEmptyLineCount++;
 			}
 
@@ -352,20 +372,19 @@ const Typing = {
 
 			// 改行マーカーの処理
 			if (line.trim() !== "" || idx === APP_STATE.allLines.length - 1) {
-				const nl = document.createElement("span");
-
-				// TypeWellオリジナルモードでは改行も自動スキップ
-				// カスタムコードのTypeWellモードでは改行をタイピング対象にする
-				if (DOM.langSel.value === "typewell") {
-					nl.className = "char multibyte-skip newline";
-					// data-char属性を付けない = タイピング対象外
+				// TypeWellオリジナルモードまたは2バイト文字のみの行の場合は改行を表示しない
+				if (
+					DOM.langSel.value === "typewell" ||
+					this.isLineOnlyMultiByte(line)
+				) {
+					// 改行マーカーを表示しない（要素自体を作成しない）
 				} else {
+					const nl = document.createElement("span");
 					nl.className = "char pending newline";
 					nl.dataset.char = "\n";
+					nl.textContent = "⏎";
+					charContainer.appendChild(nl);
 				}
-
-				nl.textContent = "⏎";
-				charContainer.appendChild(nl);
 			}
 
 			DOM.codeEl.appendChild(row);

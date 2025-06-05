@@ -1,0 +1,1542 @@
+:root {
+	/* ダークモード（デフォルト） */
+	--bg-color: #1e1e1e;
+	--text-color: #d4d4d4;
+	--header-bg: #333;
+	--panel-bg: #2d2d2d;
+	--button-bg: #252526;
+	--border-color: #3c3c3c;
+	--correct-color: #6a9955;
+	--incorrect-color: #f44747;
+	--incorrect-bg: rgba(244, 71, 71, 0.2);
+	--pending-color: #808080;
+	--current-bg: #264f78;
+	--indent-color: #484848;
+	--newline-color: #3a3d41;
+	--progress-bg: #3a3d41;
+	--progress-color: #0e639c;
+}
+
+[data-theme="light"] {
+	/* ライトモード */
+	--bg-color: #ffffff;
+	--text-color: #333333;
+	--header-bg: #f5f5f5;
+	--panel-bg: #f0f0f0;
+	--button-bg: #e0e0e0;
+	--border-color: #cccccc;
+	--correct-color: #28a745;
+	--incorrect-color: #dc3545;
+	--incorrect-bg: rgba(220, 53, 69, 0.2);
+	--pending-color: #666666;
+	--current-bg: #ffd700;
+	--indent-color: #999999;
+	--newline-color: #888888;
+	--progress-bg: #e0e0e0;
+	--progress-color: #007acc;
+}
+
+body {
+	margin: 0;
+	padding: 0;
+	font-family: "Courier New", monospace;
+	background: var(--bg-color);
+	color: var(--text-color);
+	display: flex;
+	flex-direction: column;
+	min-height: 100vh;
+	transition: background-color 0.3s, color 0.3s;
+	border: none;
+}
+
+header {
+	padding: 10px 20px;
+	background: var(--header-bg);
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	transition: background-color 0.3s;
+	border: none;
+	border-bottom: none;
+	position: relative;
+}
+
+header select,
+header button {
+	background: var(--button-bg);
+	color: var(--text-color);
+	border: 1px solid var(--border-color);
+	padding: 5px;
+	cursor: pointer;
+	transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+}
+
+/* キーボードヒントのスタイル */
+.keyboard-hint {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	margin-right: 15px;
+	opacity: 0.7;
+	font-size: 11px;
+	color: var(--pending-color);
+	transition: opacity 0.2s ease;
+}
+
+.keyboard-hint:hover {
+	opacity: 1;
+}
+
+.hint-key {
+	background: var(--button-bg);
+	color: var(--text-color);
+	border: 1px solid var(--border-color);
+	border-radius: 3px;
+	padding: 2px 6px;
+	font-family: "Courier New", monospace;
+	font-size: 10px;
+	font-weight: bold;
+	box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+	transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+}
+
+.hint-text {
+	font-family: "Courier New", monospace;
+	font-size: 11px;
+	font-weight: normal;
+	color: var(--pending-color);
+}
+
+#progress-bar {
+	height: 4px;
+	background: var(--bg-color);
+	width: 100%;
+	border: none;
+	box-shadow: none;
+	transition: background-color 0.3s;
+}
+
+#progress {
+	height: 100%;
+	background: var(--progress-color);
+	width: 0;
+	transition: width 0.3s ease;
+}
+
+#custom-container {
+	display: none;
+	flex-direction: column;
+	gap: 5px;
+	padding: 10px 20px;
+	background: var(--panel-bg);
+	transition: background-color 0.3s;
+	border: none;
+	border-bottom: none;
+}
+
+#typewell-container {
+	display: none;
+	padding: 10px 20px;
+	background: var(--panel-bg);
+	transition: background-color 0.3s;
+	border: none;
+	border-bottom: none;
+}
+
+.typewell-mode-selection {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.typewell-mode-label {
+	font-weight: bold;
+	color: var(--text-color);
+	font-family: "Courier New", monospace;
+	font-size: 14px;
+}
+
+.typewell-modes {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.typewell-radio-label {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	color: var(--text-color);
+	font-family: "Courier New", monospace;
+	font-size: 12px;
+	cursor: pointer;
+	transition: color 0.2s ease;
+}
+
+.typewell-radio-label:hover {
+	color: var(--progress-color);
+}
+
+.typewell-radio-label input[type="radio"] {
+	width: 16px;
+	height: 16px;
+	accent-color: var(--progress-color);
+	cursor: pointer;
+}
+
+.typewell-radio-text {
+	user-select: none;
+}
+
+/* カスタムコードモード選択のスタイル */
+.custom-mode-selection {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.custom-mode-label {
+	font-weight: bold;
+	color: var(--text-color);
+	font-family: "Courier New", monospace;
+	font-size: 14px;
+}
+
+.custom-modes {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.custom-radio-label {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	color: var(--text-color);
+	font-family: "Courier New", monospace;
+	font-size: 12px;
+	cursor: pointer;
+	transition: color 0.2s ease;
+}
+
+.custom-radio-label:hover {
+	color: var(--progress-color);
+}
+
+.custom-radio-label input[type="radio"] {
+	width: 16px;
+	height: 16px;
+	accent-color: var(--progress-color);
+	cursor: pointer;
+}
+
+.custom-radio-text {
+	user-select: none;
+}
+
+#custom-code {
+	width: 100%;
+	height: 100px;
+	background: var(--bg-color);
+	color: var(--text-color);
+	border: 1px solid var(--border-color);
+	font-family: "Courier New", monospace;
+	transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+}
+
+#stats {
+	margin-left: auto;
+	display: flex;
+	gap: 15px;
+}
+
+#container {
+	flex: 1;
+	display: flex;
+	overflow: hidden;
+	position: relative;
+	border: none;
+	border-bottom: none;
+	margin: 0;
+	padding: 0;
+}
+
+#code-pane {
+	flex: 1;
+	padding: 20px 20px 0 20px;
+	overflow: auto;
+	position: relative;
+}
+
+/* タイプウェルスタート画面のスタイル - 中央よりやや左上に配置 */
+#typewell-start-screen {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	display: flex;
+	align-items: flex-start;
+	justify-content: center;
+	background: var(--bg-color);
+	z-index: 10;
+	padding: 100px 0 0 0; /* 上部に余白、水平方向は中央 */
+	transform: translateX(-15%); /* 中央から少し左にシフト */
+}
+
+.typewell-start-content {
+	text-align: center; /* クリック性向上のため中央揃えに戻す */
+	padding: 30px;
+	border: 1px solid var(--border-color);
+	border-radius: 8px;
+	background: var(--panel-bg);
+	min-width: 300px;
+	max-width: 400px;
+}
+
+.typewell-start-title {
+	font-size: 24px; /* サイズを少し縮小 */
+	font-weight: bold;
+	color: var(--progress-color);
+	margin: 0 0 15px 0;
+	font-family: "Courier New", monospace;
+}
+
+.typewell-start-info {
+	margin-bottom: 25px;
+	color: var(--text-color);
+	font-family: "Courier New", monospace;
+}
+
+.typewell-start-info p {
+	margin: 6px 0;
+	font-size: 13px;
+}
+
+.typewell-mode-display {
+	font-weight: bold;
+	color: var(--progress-color);
+}
+
+.typewell-start-instruction {
+	display: flex;
+	flex-direction: column;
+	align-items: center; /* クリック性向上のため中央揃えに戻す */
+	gap: 12px;
+}
+
+.typewell-start-key {
+	display: flex;
+	align-items: center;
+	justify-content: center; /* クリック性向上のため中央揃えに戻す */
+}
+
+.start-key {
+	background: var(--progress-color);
+	color: white;
+	border: none;
+	border-radius: 6px;
+	padding: 10px 20px; /* クリック領域を確保 */
+	font-family: "Courier New", monospace;
+	font-size: 14px; /* サイズを少し縮小 */
+	font-weight: bold;
+	box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2); /* 控えめなシャドウ */
+	animation: subtle-pulse 3s infinite; /* より控えめなアニメーション */
+	cursor: pointer; /* カーソル表示を明確化 */
+	user-select: none; /* テキスト選択を防止 */
+	transition: background-color 0.2s ease, transform 0.1s ease; /* ホバー効果のトランジション */
+}
+
+.start-key:hover {
+	background: #0c5a8a; /* ホバー時の色変更 */
+	transform: translateY(-1px); /* 軽微な浮き上がり効果 */
+}
+
+/* より控えめなpulseアニメーション */
+@keyframes subtle-pulse {
+	0%,
+	100% {
+		transform: scale(1);
+		opacity: 1;
+	}
+	50% {
+		transform: scale(1.02); /* 非常に控えめなスケール */
+		opacity: 0.9;
+	}
+}
+
+.typewell-start-instruction p {
+	margin: 0;
+	font-size: 14px;
+	color: var(--text-color);
+	font-family: "Courier New", monospace;
+}
+
+/* タイプウェルカウントダウンのスタイル - 中央よりやや左上に配置 */
+#typewell-countdown {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	display: flex;
+	align-items: flex-start;
+	justify-content: center;
+	background: var(--bg-color);
+	z-index: 10;
+	padding: 120px 0 0 0; /* 上部に余白、水平方向は中央 */
+	transform: translateX(-15%); /* 中央から少し左にシフト */
+}
+
+.typewell-countdown-content {
+	text-align: center; /* 中央揃えに戻す */
+}
+
+.typewell-countdown-number {
+	font-size: 80px; /* サイズを縮小 */
+	font-weight: bold;
+	color: var(--progress-color);
+	font-family: "Courier New", monospace;
+	margin: 0;
+	line-height: 1;
+}
+
+.typewell-countdown-text {
+	font-size: 18px; /* サイズを縮小 */
+	color: var(--text-color);
+	font-family: "Courier New", monospace;
+	margin-top: 15px;
+	opacity: 0.8;
+}
+
+pre {
+	margin: 0;
+	line-height: 1.4;
+	font-size: 14px;
+}
+
+/* TypeWellオリジナルモード専用スタイル（フォントサイズ変更） */
+body.typewell-original-mode pre {
+	font-size: 28px;
+	line-height: 1.6;
+	letter-spacing: 1px;
+}
+
+body.typewell-original-mode .char {
+	font-size: 28px;
+	line-height: 1.6;
+	letter-spacing: 1px;
+}
+
+body.typewell-original-mode .lineno {
+	font-size: 20px;
+	line-height: 1.6;
+}
+
+#code .line {
+	display: flex !important;
+	padding-left: clamp(0px, 25vw - 150px, 300px) !important;
+	margin-left: 0 !important;
+}
+
+.line {
+	display: flex;
+	align-items: flex-start;
+	padding-left: clamp(0px, 25vw - 150px, 300px); /* 中央よりで、1200px以降は固定 */
+	padding-right: clamp(0px, 25vw - 150px, 300px); /* 右側にも同様の余白 */
+	min-height: 1.4em; /* 空白行でも最低限の高さを確保 */
+}
+
+.line.text-wrap {
+	display: flex;
+	flex-wrap: nowrap;
+	max-width: 100vw; /* 右余白を考慮して調整 */
+}
+
+.line.text-wrap .char-content {
+	display: flex;
+	flex-wrap: wrap;
+	flex: 1;
+}
+
+.line.text-wrap .char {
+	white-space: pre-wrap;
+	word-break: break-all;
+}
+
+.line.text-wrap .char {
+	white-space: pre-wrap;
+	word-break: break-all;
+}
+
+.lineno {
+	width: 3ch;
+	user-select: none;
+	opacity: 0.5;
+	text-align: right;
+	padding-right: 1ch;
+}
+
+.char {
+	white-space: pre;
+	position: relative;
+}
+
+.char.multibyte-skip {
+	opacity: 0.4;
+	color: var(--pending-color);
+	font-style: italic;
+}
+
+.correct {
+	color: var(--correct-color);
+}
+
+.incorrect {
+	color: var(--incorrect-color);
+	background: var(--incorrect-bg);
+}
+
+.pending {
+	color: var(--pending-color);
+}
+
+.current {
+	background: var(--current-bg);
+}
+
+.indent {
+	color: var(--indent-color);
+}
+
+.newline {
+	color: var(--newline-color);
+}
+
+#overlay {
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: rgba(0, 0, 0, 0.85);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: #d4d4d4;
+	font-size: 18px;
+	flex-direction: column;
+	visibility: hidden;
+	backdrop-filter: blur(3px);
+	transition: opacity 0.4s ease-out, backdrop-filter 0.4s ease-out;
+	opacity: 0;
+}
+
+#overlay.show {
+	opacity: 1;
+}
+
+#overlay.hide {
+	opacity: 0;
+}
+
+#results-card {
+	background: var(--bg-color);
+	border: 1px solid var(--border-color);
+	border-radius: 8px;
+	padding: 40px;
+	text-align: center;
+	min-width: 320px;
+	max-width: 450px;
+	transition: transform 0.5s ease-out, opacity 0.5s ease-out;
+	transform: translateY(20px);
+	opacity: 0;
+}
+
+#overlay.show #results-card {
+	transform: translateY(0);
+	opacity: 1;
+}
+
+#overlay.hide #results-card {
+	transform: translateY(-10px);
+	opacity: 0;
+}
+
+.results-header {
+	margin-bottom: 30px;
+}
+
+.results-title {
+	font-size: 24px;
+	font-weight: normal;
+	color: var(--text-color);
+	margin: 0;
+	font-family: "Courier New", monospace;
+}
+
+.page-info {
+	font-size: 14px;
+	color: var(--pending-color);
+	margin-bottom: 30px;
+	padding-bottom: 20px;
+	border-bottom: 1px solid var(--border-color);
+}
+
+.stats-list {
+	margin-bottom: 30px;
+}
+
+.stat-item {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 12px 0;
+	border-bottom: 1px solid var(--border-color);
+	font-family: "Courier New", monospace;
+}
+
+.stat-item:last-child {
+	border-bottom: none;
+}
+
+.stat-label {
+	font-size: 14px;
+	color: var(--pending-color);
+}
+
+.stat-value {
+	font-size: 18px;
+	font-weight: bold;
+	color: var(--text-color);
+}
+
+.accuracy-value {
+	color: var(--progress-color);
+}
+
+/* TOP3ランキング表示のスタイル */
+.top3-ranking-section {
+	margin-bottom: 25px;
+	padding: 20px 0;
+	border-top: 1px solid var(--border-color);
+}
+
+.ranking-info {
+	margin-bottom: 15px;
+	text-align: center;
+}
+
+.rank-achievement {
+	color: var(--progress-color);
+	font-size: 14px;
+	font-weight: bold;
+	font-family: "Courier New", monospace;
+}
+
+.ranking-header {
+	margin-bottom: 15px;
+	text-align: center;
+}
+
+.ranking-list {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.ranking-item {
+	display: grid;
+	grid-template-columns: 24px 60px 40px 1fr;
+	align-items: center;
+	gap: 12px;
+	padding: 8px 12px;
+	background: var(--panel-bg);
+	border-radius: 4px;
+	border: 1px solid var(--border-color);
+	font-family: "Courier New", monospace;
+	font-size: 14px;
+}
+
+.ranking-item.current-record {
+	border-color: var(--progress-color);
+	background: var(--current-bg);
+	color: var(--text-color);
+}
+
+.rank-position {
+	font-size: 12px;
+	color: var(--pending-color);
+	text-align: center;
+}
+
+.ranking-item.current-record .rank-position {
+	color: var(--text-color);
+}
+
+.rank-wpm {
+	font-size: 16px;
+	font-weight: bold;
+	color: var(--text-color);
+	text-align: right;
+}
+
+.rank-unit {
+	font-size: 12px;
+	color: var(--pending-color);
+	text-align: left;
+}
+
+.ranking-item.current-record .rank-unit {
+	color: var(--text-color);
+}
+
+.rank-details {
+	font-size: 12px;
+	color: var(--pending-color);
+	text-align: right;
+}
+
+.ranking-item.current-record .rank-details {
+	color: var(--text-color);
+}
+
+.results-buttons {
+	display: flex;
+	gap: 12px;
+	justify-content: center;
+}
+
+.result-btn {
+	padding: 12px 24px;
+	border: 1px solid var(--border-color);
+	border-radius: 4px;
+	font-size: 14px;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	font-family: "Courier New", monospace;
+	background: var(--bg-color);
+	color: var(--text-color);
+}
+
+.result-btn.primary {
+	background: var(--progress-color);
+	color: white;
+	border-color: var(--progress-color);
+}
+
+.result-btn:hover {
+	transform: translateY(-1px);
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+#settings-panel {
+	display: none;
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: rgba(0, 0, 0, 0.5);
+	z-index: 1000;
+	justify-content: center;
+	align-items: center;
+}
+
+#settings-content {
+	background: var(--bg-color);
+	color: var(--text-color);
+	padding: 30px;
+	border-radius: 8px;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+	min-width: 350px;
+	border: 1px solid var(--border-color);
+	text-align: center;
+	transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+}
+
+#settings-content h3 {
+	margin-top: 0;
+	margin-bottom: 20px;
+}
+
+.setting-row {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	margin-bottom: 20px;
+	text-align: left;
+}
+
+.setting-row label {
+	font-weight: bold;
+}
+
+.toggle-switch {
+	position: relative;
+	width: 50px;
+	height: 24px;
+	background-color: var(--border-color);
+	border-radius: 12px;
+	cursor: pointer;
+	transition: background-color 0.3s;
+}
+
+.toggle-switch.active {
+	background-color: var(--progress-color);
+}
+
+.toggle-slider {
+	position: absolute;
+	top: 2px;
+	left: 2px;
+	width: 20px;
+	height: 20px;
+	background-color: #ffffff;
+	border-radius: 50%;
+	transition: transform 0.3s;
+}
+
+.toggle-switch.active .toggle-slider {
+	transform: translateX(26px);
+}
+
+.theme-labels {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+}
+
+.theme-label {
+	font-size: 12px;
+	opacity: 0.7;
+}
+
+.theme-label.active {
+	opacity: 1;
+	font-weight: bold;
+}
+
+/* 休憩設定のスタイル */
+.break-setting {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+}
+
+.break-label {
+	font-size: 12px;
+	color: var(--text-color);
+}
+
+.break-input {
+	background: var(--bg-color);
+	color: var(--text-color);
+	border: 1px solid var(--border-color);
+	padding: 4px 8px;
+	border-radius: 4px;
+	width: 80px;
+	font-family: "Courier New", monospace;
+	font-size: 12px;
+	text-align: center;
+	transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+}
+
+.break-input:focus {
+	outline: none;
+	border-color: var(--progress-color);
+	box-shadow: 0 0 0 2px rgba(14, 99, 156, 0.2);
+}
+
+.break-input:invalid {
+	border-color: var(--incorrect-color);
+}
+
+.data-buttons {
+	display: flex;
+	gap: 8px;
+}
+
+.data-buttons button {
+	background: var(--button-bg);
+	color: var(--text-color);
+	border: 1px solid var(--border-color);
+	padding: 6px 12px;
+	border-radius: 4px;
+	cursor: pointer;
+	font-family: "Courier New", monospace;
+	font-size: 12px;
+	transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+}
+
+.data-buttons button:hover {
+	background: var(--border-color);
+}
+
+#export-data-btn:hover {
+	background: var(--correct-color);
+	color: white;
+	border-color: var(--correct-color);
+}
+
+#import-data-btn:hover {
+	background: var(--progress-color);
+	color: white;
+	border-color: var(--progress-color);
+}
+
+#delete-all-data-btn {
+	background: var(--incorrect-color) !important;
+	color: white !important;
+	border-color: var(--incorrect-color) !important;
+}
+
+#delete-all-data-btn:hover {
+	background: #c82333 !important;
+	transform: translateY(-1px);
+}
+
+#close-settings {
+	background: var(--progress-color);
+	color: white;
+	border: none;
+	padding: 10px 20px;
+	border-radius: 4px;
+	cursor: pointer;
+	margin-top: 20px;
+}
+
+#close-settings:hover {
+	background: #0c5a8a;
+}
+
+/* 休憩ダイアログのスタイル */
+#break-dialog {
+	display: none;
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: rgba(0, 0, 0, 0.6);
+	z-index: 1500;
+	justify-content: center;
+	align-items: center;
+}
+
+#break-content {
+	background: var(--bg-color);
+	color: var(--text-color);
+	border-radius: 8px;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+	border: 1px solid var(--border-color);
+	max-width: 400px;
+	width: 90%;
+	padding: 0;
+	overflow: hidden;
+	transition: background-color 0.3s, color 0.3s;
+}
+
+.break-header {
+	background: var(--panel-bg);
+	color: var(--text-color);
+	padding: 20px;
+	text-align: center;
+	font-family: "Courier New", monospace;
+	border-bottom: 1px solid var(--border-color);
+}
+
+.break-header h3 {
+	margin: 0;
+	font-size: 18px;
+	font-weight: normal;
+}
+
+.break-body {
+	padding: 30px;
+	text-align: center;
+	font-family: "Courier New", monospace;
+}
+
+.break-message {
+	margin-bottom: 25px;
+}
+
+.break-message p {
+	margin: 8px 0;
+	font-size: 14px;
+	line-height: 1.5;
+	color: var(--text-color);
+}
+
+.break-stats {
+	background: var(--panel-bg);
+	border: 1px solid var(--border-color);
+	border-radius: 4px;
+	padding: 15px;
+	margin-bottom: 25px;
+}
+
+.break-stat-item {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 8px 0;
+	font-family: "Courier New", monospace;
+}
+
+.break-stat-item:not(:last-child) {
+	border-bottom: 1px solid var(--border-color);
+}
+
+.break-stat-label {
+	font-size: 14px;
+	color: var(--pending-color);
+}
+
+.break-stat-value {
+	font-size: 14px;
+	font-weight: bold;
+	color: var(--text-color);
+}
+
+.break-resume-button {
+	background: var(--progress-color);
+	color: white;
+	border: none;
+	padding: 12px 24px;
+	border-radius: 4px;
+	font-size: 14px;
+	cursor: pointer;
+	font-family: "Courier New", monospace;
+	transition: background-color 0.2s ease;
+}
+
+.break-resume-button:hover {
+	background: #0c5a8a;
+}
+
+/* ヘルプパネルのスタイル */
+#help-panel {
+	display: none;
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: rgba(0, 0, 0, 0.5);
+	z-index: 1001;
+	justify-content: center;
+	align-items: center;
+	padding: 20px;
+	box-sizing: border-box;
+}
+
+#help-content {
+	background: var(--bg-color);
+	color: var(--text-color);
+	border-radius: 8px;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+	border: 1px solid var(--border-color);
+	transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+	max-width: 800px;
+	max-height: 90vh;
+	width: 100%;
+	display: flex;
+	flex-direction: column;
+}
+
+.help-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 20px 30px;
+	border-bottom: 1px solid var(--border-color);
+	background: var(--panel-bg);
+	border-radius: 8px 8px 0 0;
+}
+
+.help-header h3 {
+	margin: 0;
+	font-family: "Courier New", monospace;
+}
+
+.close-btn {
+	background: none;
+	border: none;
+	color: var(--text-color);
+	font-size: 18px;
+	cursor: pointer;
+	padding: 5px 10px;
+	border-radius: 4px;
+	transition: background-color 0.2s;
+}
+
+.close-btn:hover {
+	background: var(--border-color);
+}
+
+.help-sections {
+	padding: 20px 30px;
+	overflow-y: auto;
+	flex: 1;
+}
+
+.help-section {
+	margin-bottom: 25px;
+}
+
+.help-section:last-child {
+	margin-bottom: 0;
+}
+
+.help-section h4 {
+	margin: 0 0 12px 0;
+	color: var(--progress-color);
+	font-family: "Courier New", monospace;
+	font-size: 16px;
+}
+
+.help-section p {
+	margin: 0 0 12px 0;
+	line-height: 1.6;
+	font-family: "Courier New", monospace;
+	font-size: 14px;
+}
+
+.help-section ul,
+.help-section ol {
+	margin: 0;
+	padding-left: 20px;
+	font-family: "Courier New", monospace;
+	font-size: 14px;
+}
+
+.help-section li {
+	margin-bottom: 8px;
+	line-height: 1.5;
+}
+
+.help-section strong {
+	color: var(--text-color);
+	font-weight: bold;
+}
+
+/* 統計パネルのスタイル */
+#stats-panel {
+	display: none;
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: rgba(0, 0, 0, 0.5);
+	z-index: 1000;
+	justify-content: center;
+	align-items: center;
+}
+
+#stats-content {
+	background: var(--bg-color);
+	color: var(--text-color);
+	padding: 30px;
+	border-radius: 8px;
+	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+	min-width: 500px;
+	max-width: 600px;
+	max-height: 80vh;
+	border: 1px solid var(--border-color);
+	transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+	overflow-y: auto;
+}
+
+#stats-content h3 {
+	margin-top: 0;
+	margin-bottom: 20px;
+	font-family: "Courier New", monospace;
+}
+
+.language-section {
+	margin-bottom: 20px;
+	border: 1px solid var(--border-color);
+	border-radius: 4px;
+}
+
+.language-header {
+	padding: 12px 15px;
+	background: var(--panel-bg);
+	border-bottom: 1px solid var(--border-color);
+	cursor: pointer;
+	font-family: "Courier New", monospace;
+	font-weight: bold;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.language-header:hover {
+	background: var(--border-color);
+}
+
+.expand-icon {
+	transition: transform 0.2s ease;
+}
+
+.language-header.expanded .expand-icon {
+	transform: rotate(90deg);
+}
+
+.language-content {
+	display: none;
+	padding: 15px;
+}
+
+.language-content.show {
+	display: block;
+}
+
+.part-section {
+	margin-bottom: 15px;
+	border: 1px solid var(--border-color);
+	border-radius: 4px;
+}
+
+.part-header {
+	padding: 10px 12px;
+	background: var(--bg-color);
+	border-bottom: 1px solid var(--border-color);
+	font-family: "Courier New", monospace;
+}
+
+.part-latest {
+	font-size: 14px;
+	color: var(--pending-color);
+	margin-top: 5px;
+}
+
+.part-history {
+	padding: 10px 12px;
+	display: none;
+}
+
+.part-history.show {
+	display: block;
+}
+
+.history-toggle {
+	background: none;
+	border: none;
+	color: var(--progress-color);
+	cursor: pointer;
+	font-family: "Courier New", monospace;
+	font-size: 12px;
+	margin-top: 5px;
+}
+
+.history-toggle:hover {
+	text-decoration: underline;
+}
+
+.history-table {
+	width: 100%;
+	border-collapse: collapse;
+	font-family: "Courier New", monospace;
+	font-size: 12px;
+	margin-top: 10px;
+}
+
+.history-table th,
+.history-table td {
+	padding: 6px 8px;
+	text-align: left;
+	border-bottom: 1px solid var(--border-color);
+}
+
+.history-table th {
+	background: var(--panel-bg);
+	cursor: pointer;
+	position: relative;
+}
+
+.history-table th:hover {
+	background: var(--border-color);
+}
+
+.sort-arrow {
+	margin-left: 5px;
+	font-size: 10px;
+}
+
+.best-record {
+	color: var(--progress-color);
+}
+
+.stats-actions {
+	display: flex;
+	gap: 12px;
+	justify-content: center;
+	margin-top: 20px;
+}
+
+.stats-actions button {
+	background: var(--button-bg);
+	color: var(--text-color);
+	border: 1px solid var(--border-color);
+	padding: 10px 20px;
+	border-radius: 4px;
+	cursor: pointer;
+	font-family: "Courier New", monospace;
+	transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+}
+
+#close-stats {
+	background: var(--progress-color);
+	color: white;
+	border-color: var(--progress-color);
+}
+
+.stats-actions button:hover {
+	background: var(--border-color);
+}
+
+#close-stats:hover {
+	background: #0c5a8a;
+}
+
+/* 苦手文字表示のスタイル */
+.mistake-chars-section {
+	margin-bottom: 20px;
+	padding: 15px 0;
+	border-top: 1px solid var(--border-color);
+}
+
+.mistake-chars-header {
+	margin-bottom: 10px;
+}
+
+.mistake-list {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 8px;
+}
+
+.mistake-char {
+	background: var(--incorrect-bg);
+	color: var(--incorrect-color);
+	padding: 4px 8px;
+	border-radius: 4px;
+	font-family: "Courier New", monospace;
+	font-size: 12px;
+	border: 1px solid var(--incorrect-color);
+}
+
+/* 統計画面の苦手文字スタイル */
+.mistake-stats-section {
+	margin-bottom: 25px;
+	padding: 20px;
+	background: var(--panel-bg);
+	border-radius: 6px;
+	border: 1px solid var(--border-color);
+}
+
+.mistake-stats-section h4 {
+	margin: 0 0 15px 0;
+	color: var(--progress-color);
+	font-family: "Courier New", monospace;
+	font-size: 16px;
+}
+
+.mistake-stats-grid {
+	display: grid;
+	gap: 8px;
+}
+
+.mistake-stat-item {
+	display: grid;
+	grid-template-columns: 30px 60px 60px 1fr;
+	align-items: center;
+	gap: 12px;
+	padding: 8px 12px;
+	background: var(--bg-color);
+	border-radius: 4px;
+	border: 1px solid var(--border-color);
+	font-family: "Courier New", monospace;
+	font-size: 14px;
+}
+
+.mistake-rank {
+	text-align: center;
+	font-weight: bold;
+	color: var(--progress-color);
+}
+
+.mistake-char {
+	text-align: center;
+	font-weight: bold;
+	background: var(--incorrect-bg);
+	color: var(--incorrect-color);
+	padding: 4px 8px;
+	border-radius: 4px;
+	border: 1px solid var(--incorrect-color);
+}
+
+.mistake-count {
+	text-align: center;
+	color: var(--text-color);
+}
+
+.mistake-bar {
+	height: 8px;
+	background: var(--border-color);
+	border-radius: 4px;
+	overflow: hidden;
+}
+
+.mistake-bar-fill {
+	height: 100%;
+	background: var(--incorrect-color);
+	transition: width 0.3s ease;
+}
+
+/* 削除確認ダイアログのスタイル */
+#delete-confirmation-dialog {
+	display: none;
+	position: fixed;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 100%;
+	background: rgba(0, 0, 0, 0.7);
+	z-index: 2000;
+	justify-content: center;
+	align-items: center;
+}
+
+#delete-dialog-content {
+	background: var(--bg-color);
+	color: var(--text-color);
+	border-radius: 8px;
+	box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+	border: 2px solid var(--incorrect-color);
+	max-width: 500px;
+	width: 90%;
+	padding: 0;
+	overflow: hidden;
+	transition: background-color 0.3s, color 0.3s;
+}
+
+.delete-dialog-header {
+	background: var(--incorrect-color);
+	color: white;
+	padding: 20px;
+	text-align: center;
+	font-family: "Courier New", monospace;
+	font-size: 18px;
+	font-weight: bold;
+}
+
+.delete-dialog-body {
+	padding: 30px;
+	text-align: center;
+	font-family: "Courier New", monospace;
+}
+
+.delete-warning-icon {
+	font-size: 48px;
+	color: var(--incorrect-color);
+	margin-bottom: 20px;
+	display: block;
+}
+
+.delete-warning-text {
+	font-size: 16px;
+	line-height: 1.6;
+	margin-bottom: 25px;
+	color: var(--text-color);
+}
+
+.delete-warning-list {
+	text-align: left;
+	margin: 20px 0;
+	padding-left: 20px;
+}
+
+.delete-warning-list li {
+	margin-bottom: 8px;
+	color: var(--pending-color);
+}
+
+.delete-dialog-buttons {
+	display: flex;
+	gap: 15px;
+	justify-content: center;
+	margin-top: 30px;
+}
+
+.delete-dialog-btn {
+	padding: 12px 24px;
+	border-radius: 4px;
+	font-family: "Courier New", monospace;
+	font-size: 14px;
+	cursor: pointer;
+	transition: all 0.2s ease;
+	min-width: 100px;
+}
+
+.delete-cancel-btn {
+	background: var(--button-bg);
+	color: var(--text-color);
+	border: 1px solid var(--border-color);
+}
+
+.delete-cancel-btn:hover {
+	background: var(--border-color);
+}
+
+.delete-confirm-btn {
+	background: var(--incorrect-color);
+	color: white;
+	border: 1px solid var(--incorrect-color);
+}
+
+.delete-confirm-btn:hover {
+	background: #c82333;
+	transform: translateY(-1px);
+}
+
+.delete-final-confirm-btn {
+	background: #721c24;
+	color: white;
+	border: 1px solid #721c24;
+}
+
+.delete-final-confirm-btn:hover {
+	background: #5a161c;
+	transform: translateY(-1px);
+}
+
+/* シンプルフッターのスタイル（完全に地続き・間隔なし） */
+.footer-simple {
+	text-align: center;
+	padding: 0;
+	margin: 0;
+	font-size: 12px;
+	background: var(--bg-color);
+	color: var(--pending-color);
+	border: none;
+	line-height: 1;
+}
+
+.footer-simple a {
+	color: var(--pending-color);
+	text-decoration: none;
+	display: inline-flex;
+	align-items: center;
+	gap: 4px;
+	padding: 5px;
+}
+
+.footer-simple a:hover {
+	color: var(--text-color);
+	text-decoration: underline;
+}

@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Typing Practice</title>
+    <link rel="stylesheet" href="static/style.css">
+</head>
+
+<body tabindex="0">
+    <header>
+        <!-- Escキーヒント（左上に移動） -->
+        <div class="keyboard-hint">
+            <span class="hint-key">Esc</span>
+            <span class="hint-text">Reset</span>
+        </div>
+        <label for="language">Language:</label>
+        <select id="language">
+            <option value="python">Python</option>
+            <option value="javascript">JavaScript</option>
+            <option value="java">Java</option>
+            <option value="c">C</option>
+            <option value="cpp">C++</option>
+            <option value="rust">Rust</option>
+            <option value="lua">Lua</option>
+            <option value="typewell">TypeWell Original</option>
+            <option value="custom">Custom</option>
+        </select>
+        <button id="toggle-custom">Custom</button>
+        <button id="settings-btn">⚙️ Settings</button>
+        <button id="stats-btn">📊 Stats</button>
+        <button id="help-btn">📖 Help</button>
+        <div id="stats">
+            <div id="timer">0s</div>
+            <div id="wpm">WPM: 0</div>
+            <div id="acc">Accuracy: 100%</div>
+            <div id="progress-text">0/0</div>
+            <div>
+                <label for="page-select">Page:</label>
+                <select id="page-select"
+                    style="background: var(--button-bg); color: var(--text-color); border: 1px solid var(--border-color); padding: 2px;">
+                    <option value="0">1</option>
+                </select>
+            </div>
+        </div>
+    </header>
+
+    <!-- プログレスバーをヘッダーの直下に移動 -->
+    <div id="progress-bar">
+        <div id="progress"></div>
+    </div>
+
+    <div id="custom-container">
+        <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;">
+            <label for="custom-name">Name:</label>
+            <input type="text" id="custom-name" placeholder="Enter code name..."
+                style="background: var(--bg-color); color: var(--text-color); border: 1px solid var(--border-color); padding: 5px;">
+            <button id="save-custom">Save</button>
+            <input type="file" id="file-input"
+                accept=".txt,.js,.py,.c,.cpp,.h,.html,.css,.java,.rb,.php,.go,.rs,.ts,.jsx,.tsx,.vue,.md,.json,.xml,.yml,.yaml,.sh,.bat"
+                style="display: none;">
+            <button id="choose-file-btn">📁 Choose File</button>
+        </div>
+
+        <!-- カスタムコードモード選択 -->
+        <div class="custom-mode-selection" style="margin-bottom: 10px;">
+            <label class="custom-mode-label">Mode:</label>
+            <div class="custom-modes">
+                <label class="custom-radio-label">
+                    <input type="radio" name="custom-mode" value="normal" id="custom-normal" checked>
+                    <span class="custom-radio-text">Normal (Regular typing)</span>
+                </label>
+                <label class="custom-radio-label">
+                    <input type="radio" name="custom-mode" value="typewell" id="custom-typewell">
+                    <span class="custom-radio-text">TypeWell Mode (Strict typing)</span>
+                </label>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 10px;">
+            <select id="saved-codes"
+                style="background: var(--button-bg); color: var(--text-color); border: 1px solid var(--border-color); padding: 5px; flex: 1;">
+                <option value="">-- Select saved code --</option>
+            </select>
+            <button id="load-custom">Load</button>
+            <button id="delete-custom">Delete</button>
+        </div>
+        <div style="font-size: 12px; color: var(--pending-color); margin-bottom: 10px;">
+            ⚠️ Note: Only ASCII text files are supported. Files with non-ASCII characters (Japanese, Chinese, etc.) may
+            not display correctly.
+        </div>
+        <label for="custom-code">Paste your code here:</label>
+        <textarea id="custom-code" placeholder="Enter code for practice..."></textarea>
+    </div>
+
+    <!-- TypeWellモード選択 -->
+    <div id="typewell-container">
+        <div class="typewell-mode-selection">
+            <label class="typewell-mode-label">Mode:</label>
+            <div class="typewell-modes">
+                <label class="typewell-radio-label">
+                    <input type="radio" name="typewell-mode" value="lowercase" id="typewell-lowercase" checked>
+                    <span class="typewell-radio-text">Lowercase (a-z)</span>
+                </label>
+                <label class="typewell-radio-label">
+                    <input type="radio" name="typewell-mode" value="mixed" id="typewell-mixed">
+                    <span class="typewell-radio-text">Mixed Case (a-z, A-Z)</span>
+                </label>
+                <label class="typewell-radio-label">
+                    <input type="radio" name="typewell-mode" value="symbols" id="typewell-symbols">
+                    <span class="typewell-radio-text">With Symbols (a-z, A-Z, symbols)</span>
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <div id="container">
+        <div id="code-pane">
+            <!-- タイプウェルスタート画面 -->
+            <div id="typewell-start-screen" style="display: none;">
+                <div class="typewell-start-content">
+                    <h2 class="typewell-start-title">TypeWell Original</h2>
+                    <div class="typewell-start-info">
+                        <p>360 characters • 10 lines • Random generated</p>
+                        <p class="typewell-mode-display">Mode: <span id="typewell-current-mode">Lowercase</span></p>
+                    </div>
+                    <div class="typewell-start-instruction">
+                        <div class="typewell-start-key">
+                            <button id="typewell-start-button" class="start-key">Enter</button>
+                        </div>
+                        <p>Press Enter or Space to start</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- タイプウェルカウントダウン -->
+            <div id="typewell-countdown" style="display: none;">
+                <div class="typewell-countdown-content">
+                    <div class="typewell-countdown-number">3</div>
+                    <div class="typewell-countdown-text">Get Ready...</div>
+                </div>
+            </div>
+
+            <pre id="code"></pre>
+        </div>
+        <div id="overlay">
+            <div id="results-card">
+                <div class="results-header">
+                    <h2 class="results-title">Results</h2>
+                </div>
+
+                <div class="page-info">
+                    <span id="page-badge">Page 1/1</span> • <span id="character-count">0 characters</span>
+                </div>
+
+                <div class="stats-list">
+                    <div class="stat-item">
+                        <span class="stat-label">Time</span>
+                        <span class="stat-value" id="time-display">0s</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">WPM</span>
+                        <span class="stat-value" id="wpm-display">0</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Accuracy</span>
+                        <span class="stat-value accuracy-value" id="accuracy-display">100%</span>
+                    </div>
+                </div>
+
+                <!-- TOP3ランキング表示セクション -->
+                <div id="top3-ranking" class="top3-ranking-section" style="display: none;">
+                    <div id="ranking-info" class="ranking-info" style="display: none;">
+                        <!-- ランクイン表示がここに表示される -->
+                    </div>
+                    <div class="ranking-header">
+                        <span class="stat-label">Top Records</span>
+                    </div>
+                    <div id="ranking-list" class="ranking-list">
+                        <!-- TOP3ランキングがここに表示される -->
+                    </div>
+                </div>
+
+                <div id="mistake-chars" class="mistake-chars-section" style="display: none;">
+                    <div class="mistake-chars-header">
+                        <span class="stat-label">Frequent Mistakes:</span>
+                    </div>
+                    <div id="mistake-list" class="mistake-list">
+                        <!-- ミス文字がここに表示される -->
+                    </div>
+                </div>
+
+                <div class="results-buttons">
+                    <button id="next-btn" class="result-btn primary">Next</button>
+                    <button id="retry-btn" class="result-btn">Retry</button>
+                    <button id="restart-btn" class="result-btn">Restart All</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 設定パネル -->
+    <div id="settings-panel">
+        <div id="settings-content">
+            <h3>Settings</h3>
+            <div class="setting-row">
+                <label>Theme:</label>
+                <div class="theme-labels">
+                    <span class="theme-label active" id="dark-label">🌙 Dark</span>
+                    <div class="toggle-switch" id="theme-toggle">
+                        <div class="toggle-slider"></div>
+                    </div>
+                    <span class="theme-label" id="light-label">☀️ Light</span>
+                </div>
+            </div>
+            <div class="setting-row">
+                <label>Text Wrap:</label>
+                <div class="theme-labels">
+                    <span class="theme-label active" id="wrap-disabled-label">📜 Off</span>
+                    <div class="toggle-switch" id="text-wrap-toggle">
+                        <div class="toggle-slider"></div>
+                    </div>
+                    <span class="theme-label" id="wrap-enabled-label">📃 On</span>
+                </div>
+            </div>
+            <div class="setting-row">
+                <label>Auto Break:</label>
+                <div class="break-setting">
+                    <span class="break-label">After</span>
+                    <input type="number" id="break-chars-input" min="0" max="10000" placeholder="0" class="break-input">
+                    <span class="break-label">chars (0 = off)</span>
+                </div>
+            </div>
+            <!-- 修正: タイプウェルカウントダウン設定 -->
+            <div class="setting-row">
+                <label for="typewell-countdown-input">TypeWell Countdown:</label>
+                <div class="break-setting">
+                    <span class="break-label">Seconds (0-3):</span>
+                    <input type="number" id="typewell-countdown-input" min="0" max="3" step="1" placeholder="3"
+                        class="break-input" tabindex="0" inputmode="numeric" autocomplete="off">
+                </div>
+            </div>
+            <div class="setting-row">
+                <label>Data:</label>
+                <div class="data-buttons">
+                    <button id="export-data-btn">📤 Export</button>
+                    <button id="import-data-btn">📥 Import</button>
+                    <input type="file" id="import-file-input" accept=".json" style="display: none;">
+                </div>
+            </div>
+            <div class="setting-row">
+                <label>Danger Zone:</label>
+                <div class="data-buttons">
+                    <button id="delete-all-data-btn">🗑️ Delete All Data</button>
+                </div>
+            </div>
+            <button id="close-settings">Close</button>
+        </div>
+    </div>
+
+    <!-- 休憩ダイアログ -->
+    <div id="break-dialog">
+        <div id="break-content">
+            <div class="break-header">
+                <h3>Take a Break</h3>
+            </div>
+            <div class="break-body">
+                <div class="break-message">
+                    <p>Time for a short break.</p>
+                    <p>Rest your hands and eyes before continuing.</p>
+                </div>
+
+                <div class="break-stats">
+                    <div class="break-stat-item">
+                        <span class="break-stat-label">WPM:</span>
+                        <span class="break-stat-value" id="break-wpm">0</span>
+                    </div>
+                    <div class="break-stat-item">
+                        <span class="break-stat-label">Time:</span>
+                        <span class="break-stat-value" id="break-time">0s</span>
+                    </div>
+                    <div class="break-stat-item">
+                        <span class="break-stat-label">Characters:</span>
+                        <span class="break-stat-value" id="break-chars">0</span>
+                    </div>
+                </div>
+
+                <button id="break-resume-btn" class="break-resume-button">
+                    Continue (Press Enter)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ヘルプパネル -->
+    <div id="help-panel">
+        <div id="help-content">
+            <div class="help-header">
+                <h3>📖 Help & Guide</h3>
+                <button id="close-help" class="close-btn">✕</button>
+            </div>
+            <div class="help-sections">
+                <div class="help-section">
+                    <h4>🚀 Getting Started</h4>
+                    <p>Select a programming language from the dropdown and start typing to begin your practice session.
+                        The timer starts automatically when you type your first character.</p>
+                </div>
+
+                <div class="help-section">
+                    <h4>⌨️ Basic Controls</h4>
+                    <ul>
+                        <li><strong>Type:</strong> Just start typing to match the displayed code</li>
+                        <li><strong>Backspace:</strong> Fix mistakes by pressing Backspace</li>
+                        <li><strong>Enter:</strong> Press Enter for new lines (shown as ⏎)</li>
+                        <li><strong>Spaces:</strong> Regular spaces, incorrect ones show as ␣</li>
+                    </ul>
+                </div>
+
+                <div class="help-section">
+                    <h4>📊 Understanding Statistics</h4>
+                    <ul>
+                        <li><strong>WPM (Words Per Minute):</strong> Speed calculated from correctly typed characters (1
+                            word = 5 characters)</li>
+                        <li><strong>Accuracy:</strong> Percentage of correct keystrokes out of total keystrokes</li>
+                        <li><strong>Progress:</strong> Shows current position / total characters in the current page
+                        </li>
+                        <li><strong>Timer:</strong> Time elapsed since you started typing</li>
+                    </ul>
+                </div>
+
+                <div class="help-section">
+                    <h4>📝 Custom Code</h4>
+                    <ol>
+                        <li>Click the <strong>"Custom"</strong> button to open the custom code editor</li>
+                        <li>Select the typing mode: <strong>Normal</strong> (allows backspace) or <strong>TypeWell
+                                Mode</strong> (strict, no backspace)</li>
+                        <li>Paste or type your code in the text area</li>
+                        <li>Enter a name and click <strong>"Save"</strong> to save it for later use</li>
+                        <li>Use <strong>"Load"</strong> to select previously saved code</li>
+                        <li>Use <strong>"Delete"</strong> to remove saved code you no longer need</li>
+                    </ol>
+                </div>
+
+                <div class="help-section">
+                    <h4>📚 Page Navigation</h4>
+                    <p>Long code is automatically split into pages of 20 lines each. You can:</p>
+                    <ul>
+                        <li>Use the <strong>Page dropdown</strong> to jump to any page directly</li>
+                        <li>Click <strong>"Next"</strong> after completing a page to continue</li>
+                        <li>Click <strong>"Retry"</strong> to practice the current page again</li>
+                        <li>Click <strong>"Restart All"</strong> to start over from page 1</li>
+                    </ul>
+                </div>
+
+                <div class="help-section">
+                    <h4>🧘 Auto Break Feature</h4>
+                    <p>Configure automatic break reminders to prevent fatigue:</p>
+                    <ul>
+                        <li><strong>Setting:</strong> Configure character count threshold in Settings</li>
+                        <li><strong>Trigger:</strong> Activates when line reaches the set character count</li>
+                        <li><strong>Resume:</strong> Click "Continue" or press Enter to proceed</li>
+                        <li><strong>Stats:</strong> View current WPM, time, and character count during break</li>
+                        <li><strong>Disable:</strong> Set to 0 to turn off break reminders</li>
+                    </ul>
+                </div>
+
+                <div class="help-section">
+                    <h4>📈 Statistics Tracking</h4>
+                    <p>Click the <strong>📊 Stats</strong> button to view your detailed practice history:</p>
+                    <ul>
+                        <li><strong>Language sections:</strong> Click to expand/collapse each language</li>
+                        <li><strong>Part history:</strong> View all attempts for each page</li>
+                        <li><strong>Best records:</strong> Highlighted with 🏆 icon</li>
+                        <li><strong>Sorting:</strong> Click column headers to sort history tables</li>
+                    </ul>
+                </div>
+
+                <div class="help-section">
+                    <h4>🎨 Customization</h4>
+                    <ul>
+                        <li><strong>Theme:</strong> Switch between Dark mode (🌙) and Light mode (☀️)</li>
+                        <li><strong>Text Wrap:</strong> Enable/disable line wrapping for long lines</li>
+                        <li><strong>Auto Break:</strong> Set character threshold for break reminders</li>
+                        <li><strong>Custom Mode:</strong> Choose between Normal typing (allows backspace) and TypeWell
+                            Mode (strict, no backspace)</li>
+                        <li><strong>Color coding:</strong>
+                            <span style="color: var(--correct-color);">Green = Correct</span>,
+                            <span
+                                style="color: var(--incorrect-color); background: var(--incorrect-bg); padding: 2px;">Red
+                                = Incorrect</span>,
+                            <span style="color: var(--pending-color);">Gray = Pending</span>,
+                            <span style="background: var(--current-bg); padding: 2px;">Blue = Current position</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="help-section">
+                    <h4>💡 Tips for Better Practice</h4>
+                    <ul>
+                        <li><strong>Focus on accuracy first:</strong> Speed will come naturally with practice</li>
+                        <li><strong>Use proper finger positioning:</strong> Follow touch typing guidelines</li>
+                        <li><strong>Practice regularly:</strong> Short, frequent sessions are more effective</li>
+                        <li><strong>Take breaks:</strong> Use auto-break feature to prevent fatigue</li>
+                        <li><strong>Don't rush:</strong> Maintain steady rhythm and avoid hunting for keys</li>
+                        <li><strong>Review your stats:</strong> Identify patterns and areas for improvement</li>
+                        <li><strong>Try TypeWell Mode:</strong> Use strict mode for better accuracy training</li>
+                    </ul>
+                </div>
+
+                <div class="help-section">
+                    <h4>🔧 Troubleshooting</h4>
+                    <ul>
+                        <li><strong>App not responding:</strong> Refresh the page to reset</li>
+                        <li><strong>Wrong character highlighted:</strong> Make sure you're typing exactly what's shown
+                        </li>
+                        <li><strong>Custom code not working:</strong> Check for proper syntax and formatting</li>
+                        <li><strong>Break not appearing:</strong> Check Auto Break setting in Settings panel</li>
+                    </ul>
+                </div>
+
+                <div class="help-section">
+                    <h4>⌨️ Keyboard Shortcuts</h4>
+                    <ul>
+                        <li><strong>Esc:</strong> Reset and start over from the beginning</li>
+                        <li><strong>Enter (during results):</strong> Continue to next page or finish</li>
+                        <li><strong>r (during results):</strong> Retry current page</li>
+                        <li><strong>R (during results):</strong> Restart all from beginning</li>
+                        <li><strong>Enter (during break):</strong> Resume typing from break</li>
+                        <li><strong>Backspace:</strong> Undo last character (not available in TypeWell mode)</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 統計パネル -->
+    <div id="stats-panel">
+        <div id="stats-content">
+            <h3>📊 Statistics</h3>
+
+            <!-- 苦手文字統計 -->
+            <div id="mistake-stats" class="mistake-stats-section">
+                <h4>🎯 Frequent Mistakes (Overall)</h4>
+                <div id="mistake-chart" class="mistake-chart">
+                    <!-- 苦手文字チャートがここに表示される -->
+                </div>
+            </div>
+
+            <div id="stats-list">
+                <!-- 統計データがここに動的に表示される -->
+            </div>
+            <div class="stats-actions">
+                <button id="clear-stats">Clear All</button>
+                <button id="close-stats">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 削除確認ダイアログ -->
+    <div id="delete-confirmation-dialog">
+        <div id="delete-dialog-content">
+            <div class="delete-dialog-header">
+                <span id="delete-dialog-title">⚠️ DELETE ALL DATA</span>
+            </div>
+            <div class="delete-dialog-body">
+                <span class="delete-warning-icon">🚨</span>
+                <div class="delete-warning-text" id="delete-dialog-message">
+                    Are you sure you want to delete ALL your data?
+                </div>
+                <div id="delete-warning-details" style="display: none;">
+                    <div class="delete-warning-text">This will permanently delete:</div>
+                    <ul class="delete-warning-list">
+                        <li>All custom codes and saved files</li>
+                        <li>All practice statistics and records</li>
+                        <li>Theme preferences</li>
+                        <li>Mistake character data</li>
+                    </ul>
+                    <div class="delete-warning-text" style="color: var(--incorrect-color); font-weight: bold;">
+                        This action cannot be undone!
+                    </div>
+                </div>
+                <div class="delete-dialog-buttons">
+                    <button class="delete-dialog-btn delete-cancel-btn" id="delete-cancel-btn">Cancel</button>
+                    <button class="delete-dialog-btn delete-confirm-btn" id="delete-proceed-btn">Yes, Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- フッター -->
+    <div class="footer-simple">
+        <a href="https://www.google.com" target="_blank" rel="noopener noreferrer">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+                <path
+                    d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
+            </svg>
+            GitHub
+        </a>
+    </div>
+
+    <!-- JavaScriptファイルの読み込み（順序重要） -->
+    <script src="static/js/snippets.js"></script>
+    <script src="static/js/constants.js"></script>
+    <script src="static/js/storage.js"></script>
+    <script src="static/js/utils.js"></script>
+    <script src="static/js/theme.js"></script>
+    <script src="static/js/stats.js"></script>
+    <script src="static/js/customCode.js"></script>
+    <script src="static/js/typing.js"></script>
+    <script src="static/js/ui.js"></script>
+    <script src="static/js/main.js"></script>
+</body>
+
+</html>

@@ -165,9 +165,9 @@ const Storage = {
 		return isNaN(parsed)
 			? CONSTANTS.TYPEWELL_SETTINGS.DEFAULT_COUNTDOWN
 			: Math.max(
-				CONSTANTS.TYPEWELL_SETTINGS.MIN_COUNTDOWN,
-				Math.min(parsed, CONSTANTS.TYPEWELL_SETTINGS.MAX_COUNTDOWN)
-			);
+					CONSTANTS.TYPEWELL_SETTINGS.MIN_COUNTDOWN,
+					Math.min(parsed, CONSTANTS.TYPEWELL_SETTINGS.MAX_COUNTDOWN),
+				);
 	},
 
 	// タイプウェルカウントダウン秒数の保存
@@ -178,10 +178,60 @@ const Storage = {
 		// 範囲制限
 		const clamped = Math.max(
 			CONSTANTS.TYPEWELL_SETTINGS.MIN_COUNTDOWN,
-			Math.min(value, CONSTANTS.TYPEWELL_SETTINGS.MAX_COUNTDOWN)
+			Math.min(value, CONSTANTS.TYPEWELL_SETTINGS.MAX_COUNTDOWN),
 		);
 
-		return this.set(CONSTANTS.STORAGE_KEYS.TYPEWELL_COUNTDOWN, clamped.toString());
+		return this.set(
+			CONSTANTS.STORAGE_KEYS.TYPEWELL_COUNTDOWN,
+			clamped.toString(),
+		);
+	},
+
+	// Initial Speed専用ミス統計の操作
+	getInitialSpeedMistakes() {
+		return this.getJSON(CONSTANTS.STORAGE_KEYS.INITIAL_SPEED_MISTAKES, {});
+	},
+
+	saveInitialSpeedMistakes(data) {
+		return this.setJSON(CONSTANTS.STORAGE_KEYS.INITIAL_SPEED_MISTAKES, data);
+	},
+
+	// Initial Speedミス文字の記録
+	recordInitialSpeedMistake(language, expectedChar, inputChar) {
+		const data = this.getInitialSpeedMistakes();
+
+		if (!data[language]) {
+			data[language] = {};
+		}
+
+		const mistakeKey = Utils.generateMistakeKey(expectedChar, inputChar);
+
+		if (data[language][mistakeKey]) {
+			data[language][mistakeKey]++;
+		} else {
+			data[language][mistakeKey] = 1;
+		}
+
+		this.saveInitialSpeedMistakes(data);
+	},
+
+	// Initial Speed上位ミス文字の取得
+	getTopInitialSpeedMistakes(language, limit = 10) {
+		const data = this.getInitialSpeedMistakes();
+		if (!data[language]) {
+			return [];
+		}
+
+		const sorted = Object.entries(data[language])
+			.sort(([, a], [, b]) => b - a)
+			.slice(0, limit);
+
+		return sorted.map(([mistake, count]) => ({ mistake, count }));
+	},
+
+	// Initial Speed専用ミス統計のクリア
+	clearInitialSpeedMistakes() {
+		return this.remove(CONSTANTS.STORAGE_KEYS.INITIAL_SPEED_MISTAKES);
 	},
 
 	// データエクスポート機能
@@ -278,7 +328,8 @@ const Storage = {
 							`• Break settings\n` +
 							`• Custom codes\n` +
 							`• Statistics\n` +
-							`• Mistake characters\n\n` +
+							`• Mistake characters\n` +
+							`• Initial Speed data\n\n` +
 							`This action cannot be undone. Are you sure you want to continue?`,
 					);
 

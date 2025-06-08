@@ -28,6 +28,23 @@ const CONSTANTS = {
 		DEFAULT_COUNTDOWN: 3, // デフォルト値
 	},
 
+	// Initial Speed設定
+	INITIAL_SPEED_SETTINGS: {
+		MODES: {
+			LOWERCASE: "lowercase",
+			NUMBERS: "numbers",
+		},
+		CHARACTER_SETS: {
+			lowercase: "abcdefghijklmnopqrstuvwxyz,.",
+			numbers: "0123456789",
+		},
+		MIN_TRIALS: 5,
+		MAX_TRIALS: 20,
+		DEFAULT_TRIALS: 10,
+		WAITING_TIME: 1000, // 待機時間（ミリ秒）
+		PROGRESS_DELAY: 1000, // 進捗表示時間（ミリ秒）
+	},
+
 	// ストレージキー
 	STORAGE_KEYS: {
 		THEME: "typingPracticeTheme",
@@ -37,6 +54,7 @@ const CONSTANTS = {
 		TEXT_WRAP: "typingPracticeTextWrap",
 		BREAK_CHARS: "typingPracticeBreakChars", // 休憩設定のキー
 		TYPEWELL_COUNTDOWN: "typingPracticeTypewellCountdown", // 追加
+		INITIAL_SPEED_MISTAKES: "typingPracticeInitialSpeedMistakes", // Initial Speed専用ミス統計
 	},
 
 	// SNIPPETSはsnippets.jsに移動
@@ -70,6 +88,20 @@ const APP_STATE = {
 	typewellState: "waiting", // "waiting", "countdown", "typing"
 	countdownTimer: null,
 	countdownValue: 0,
+	typewellLineTimes: [], // 行ごとのラップタイム記録
+	typewellCurrentLine: 0, // 現在の行番号
+
+	// Initial Speed専用状態
+	initialSpeedState: "waiting", // "waiting", "starting", "ready", "practicing", "between", "completed"
+	initialSpeedTimer: null,
+	initialSpeedCurrentTrial: 0,
+	initialSpeedTotalTrials: 10,
+	initialSpeedMode: "lowercase",
+	initialSpeedCurrentChar: "",
+	initialSpeedStartTime: null,
+	initialSpeedResults: [], // 詳細結果
+	initialSpeedCurrentMistakes: [], // Initial Speed専用ミス記録
+	initialSpeedConsecutiveMisses: 0, // 連続ミス回数
 
 	// UI状態
 	isDarkMode: true,
@@ -151,11 +183,55 @@ function initializeDOMElements() {
 	DOM.typewellLowercaseRadio = document.getElementById("typewell-lowercase");
 	DOM.typewellMixedRadio = document.getElementById("typewell-mixed");
 	DOM.typewellSymbolsRadio = document.getElementById("typewell-symbols");
+	DOM.typewellNumbersRadio = document.getElementById("typewell-numbers");
 
 	// タイプウェルスタート画面関連のDOM要素
 	DOM.typewellStartScreen = document.getElementById("typewell-start-screen");
 	DOM.typewellCountdown = document.getElementById("typewell-countdown");
 	DOM.typewellStartButton = document.getElementById("typewell-start-button"); // 追加
+
+	// Initial Speed関連のDOM要素
+	DOM.initialSpeedContainer = document.getElementById(
+		"initial-speed-container",
+	);
+	DOM.initialSpeedLowercaseRadio = document.getElementById(
+		"initial-speed-lowercase",
+	);
+	DOM.initialSpeedNumbersRadio = document.getElementById(
+		"initial-speed-numbers",
+	);
+	DOM.initialSpeedTrialsSelect = document.getElementById(
+		"initial-speed-trials",
+	);
+	DOM.initialSpeedStartScreen = document.getElementById(
+		"initial-speed-start-screen",
+	);
+	DOM.initialSpeedStartButton = document.getElementById(
+		"initial-speed-start-button",
+	);
+	DOM.initialSpeedPracticeScreen = document.getElementById(
+		"initial-speed-practice-screen",
+	);
+	DOM.initialSpeedStatus = document.getElementById("initial-speed-status");
+	DOM.initialSpeedCharacter = document.getElementById(
+		"initial-speed-character",
+	);
+	DOM.initialSpeedProgress = document.getElementById("initial-speed-progress");
+	DOM.initialSpeedTrialsDisplay = document.getElementById(
+		"initial-speed-trials-display",
+	);
+	DOM.initialSpeedCurrentMode = document.getElementById(
+		"initial-speed-current-mode",
+	);
+	DOM.initialSpeedResults = document.getElementById("initial-speed-results");
+	DOM.initialSpeedModeInfo = document.getElementById("initial-speed-mode-info");
+	DOM.initialSpeedTrialsInfo = document.getElementById(
+		"initial-speed-trials-info",
+	);
+	DOM.initialSpeedSummary = document.getElementById("initial-speed-summary");
+	DOM.initialSpeedDetailedResults = document.getElementById(
+		"initial-speed-detailed-results",
+	);
 
 	// 追加: タイプウェルカウントダウン入力フィールド
 	DOM.typewellCountdownInput = document.getElementById(

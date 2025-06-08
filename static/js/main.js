@@ -48,11 +48,42 @@ function setupEventListeners() {
 			UI.handleTypeWellModeChange(),
 		);
 	}
+	if (DOM.typewellNumbersRadio) {
+		DOM.typewellNumbersRadio.addEventListener("change", () =>
+			UI.handleTypeWellModeChange(),
+		);
+	}
 
 	// TypeWell開始ボタンのクリックイベント
 	if (DOM.typewellStartButton) {
 		DOM.typewellStartButton.addEventListener("click", () =>
 			Typing.startTypeWellFromClick(),
+		);
+	}
+
+	// Initial Speedモード選択関連
+	if (DOM.initialSpeedLowercaseRadio) {
+		DOM.initialSpeedLowercaseRadio.addEventListener("change", () =>
+			UI.handleInitialSpeedModeChange(),
+		);
+	}
+	if (DOM.initialSpeedNumbersRadio) {
+		DOM.initialSpeedNumbersRadio.addEventListener("change", () =>
+			UI.handleInitialSpeedModeChange(),
+		);
+	}
+
+	// Initial Speed試行回数選択関連
+	if (DOM.initialSpeedTrialsSelect) {
+		DOM.initialSpeedTrialsSelect.addEventListener("change", () =>
+			UI.handleInitialSpeedTrialsChange(),
+		);
+	}
+
+	// Initial Speed開始ボタンのクリックイベント
+	if (DOM.initialSpeedStartButton) {
+		DOM.initialSpeedStartButton.addEventListener("click", () =>
+			Typing.startInitialSpeedFromClick(),
 		);
 	}
 
@@ -267,6 +298,23 @@ function setupEventListeners() {
 		// 休憩中の場合は何もしない
 		if (APP_STATE.isBreakActive) return;
 
+		// Initial Speedモードの特別処理
+		if (Typing.isInitialSpeedMode()) {
+			// 待機中またはready状態の場合はTyping.handleKeyPressに委譲
+			if (
+				APP_STATE.initialSpeedState === "waiting" ||
+				APP_STATE.initialSpeedState === "ready"
+			) {
+				if (e.key === "Enter" || e.key === " " || e.key.length === 1) {
+					e.preventDefault();
+					Typing.handleKeyPress(e.key);
+				}
+				return;
+			}
+			// その他の状態では入力を無視
+			return;
+		}
+
 		// タイプウェルオリジナルモードの特別処理
 		if (DOM.langSel.value === "typewell") {
 			// 待機中またはカウントダウン中の場合はTyping.handleKeyPressに委譲
@@ -284,9 +332,10 @@ function setupEventListeners() {
 			// タイピング中の場合は通常処理を続行
 		}
 
-		// タイマーが開始されていない場合は開始（タイプウェルのタイピング状態の場合のみ）
+		// タイマーが開始されていない場合は開始（Initial Speedまたはタイプウェルのタイピング状態の場合のみ）
 		if (
 			!APP_STATE.startTime &&
+			!Typing.isInitialSpeedMode() &&
 			(DOM.langSel.value !== "typewell" || APP_STATE.typewellState === "typing")
 		) {
 			Typing.startTimer();

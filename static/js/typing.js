@@ -13,26 +13,6 @@ const Typing = {
 		return /[^\x00-\x7F]/.test(char);
 	},
 
-	// 行が2バイト文字のみで構成されているかを判定
-	isLineOnlyMultiByte(line) {
-		// 空行の場合はfalse
-		if (line.trim() === "") {
-			return false;
-		}
-
-		// 行の各文字をチェック
-		for (let i = 0; i < line.length; i++) {
-			const char = line[i];
-			// 空白文字以外でASCII文字が含まれている場合はfalse
-			if (!this.isMultiByteChar(char) && char !== " " && char !== "\t") {
-				return false;
-			}
-		}
-
-		// すべての非空白文字が2バイト文字の場合はtrue
-		return true;
-	},
-
 	// 現在のモードがTypeWellモードかどうかを判定
 	isTypeWellMode() {
 		if (DOM.langSel.value === "typewell") {
@@ -53,8 +33,22 @@ const Typing = {
 		return false;
 	},
 
+	// 現在のモードがInitial Speedモードかどうかを判定
+	isInitialSpeedMode() {
+		return DOM.langSel.value === "initial-speed";
+	},
+
 	// ページの準備
 	preparePages() {
+		// Initial Speedモードでは従来のページングを使用しない
+		if (this.isInitialSpeedMode()) {
+			APP_STATE.allLines = [];
+			APP_STATE.pages = [[{ line: "", idx: 0 }]]; // 空のページを1つだけ
+			APP_STATE.currentPage = 0;
+			this.updatePageSelect();
+			return;
+		}
+
 		APP_STATE.allLines = Utils.getCurrentCode().split("\n");
 		APP_STATE.pages = [];
 
@@ -88,8 +82,8 @@ const Typing = {
 			currentPage.push({ line, idx });
 			currentPageCharCount += lineCharCount;
 
-			// 非空白行で、かつ2バイト文字のみの行ではない場合はカウントを増やす
-			if (line.trim() !== "" && !this.isLineOnlyMultiByte(line)) {
+			// 非空白行の場合はカウントを増やす
+			if (line.trim() !== "") {
 				nonEmptyLineCount++;
 			}
 
@@ -143,6 +137,16 @@ const Typing = {
 			return;
 		}
 
+		// Initial Speedモードの特別処理
+		if (this.isInitialSpeedMode()) {
+			document.body.classList.add("initial-speed-mode");
+			this.hideAllScreens();
+			this.showInitialSpeedStartScreen();
+			return;
+		} else {
+			document.body.classList.remove("initial-speed-mode");
+		}
+
 		// TypeWellオリジナルモードの特別処理
 		if (DOM.langSel.value === "typewell") {
 			document.body.classList.add("typewell-mode");
@@ -166,6 +170,584 @@ const Typing = {
 		}
 
 		this.renderNormalPage();
+	},
+
+	// すべての特別画面を非表示
+	hideAllScreens() {
+		this.hideTypeWellScreens();
+		this.hideInitialSpeedScreens();
+		// 通常のコード表示を戻す
+		if (DOM.codeEl) {
+			DOM.codeEl.style.display = "block";
+		}
+	},
+
+	// Initial Speed画面の非表示
+	hideInitialSpeedScreens() {
+		if (DOM.initialSpeedStartScreen) {
+			DOM.initialSpeedStartScreen.style.display = "none";
+		}
+		if (DOM.initialSpeedPracticeScreen) {
+			DOM.initialSpeedPracticeScreen.style.display = "none";
+		}
+	},
+
+	// Initial Speedスタート画面の表示
+	showInitialSpeedStartScreen() {
+		if (DOM.initialSpeedStartScreen) {
+			DOM.initialSpeedStartScreen.style.display = "flex";
+			this.updateInitialSpeedStartDisplay();
+		}
+		this.hideInitialSpeedPracticeScreen();
+		// 通常のコード表示を隠す
+		if (DOM.codeEl) {
+			DOM.codeEl.style.display = "none";
+		}
+	},
+
+	// Initial Speed練習画面の表示
+	showInitialSpeedPracticeScreen() {
+		if (DOM.initialSpeedPracticeScreen) {
+			DOM.initialSpeedPracticeScreen.style.display = "flex";
+		}
+		this.hideInitialSpeedStartScreen();
+		// 通常のコード表示を隠す
+		if (DOM.codeEl) {
+			DOM.codeEl.style.display = "none";
+		}
+	},
+
+	// Initial Speed練習画面の非表示
+	hideInitialSpeedPracticeScreen() {
+		if (DOM.initialSpeedPracticeScreen) {
+			DOM.initialSpeedPracticeScreen.style.display = "none";
+		}
+	},
+
+	// Initial Speedスタート画面の非表示
+	hideInitialSpeedStartScreen() {
+		if (DOM.initialSpeedStartScreen) {
+			DOM.initialSpeedStartScreen.style.display = "none";
+		}
+	},
+
+	// Initial Speedスタート画面の表示更新
+	updateInitialSpeedStartDisplay() {
+		const mode = Utils.getSelectedInitialSpeedMode();
+		const trials = Utils.getSelectedInitialSpeedTrials();
+		const modeDisplayName = Utils.getInitialSpeedModeDisplayName(mode);
+
+		if (DOM.initialSpeedTrialsDisplay) {
+			DOM.initialSpeedTrialsDisplay.textContent = trials;
+		}
+		if (DOM.initialSpeedCurrentMode) {
+			DOM.initialSpeedCurrentMode.textContent = modeDisplayName;
+		}
+	},
+
+	// Initial Speed練習開始
+	startInitialSpeedFromClick() {
+		if (
+			this.isInitialSpeedMode() &&
+			APP_STATE.initialSpeedState === "waiting"
+		) {
+			this.startInitialSpeedPractice();
+		}
+	},
+
+	// Initial Speed練習の開始
+	startInitialSpeedPractice() {
+		// 高品質ランダム生成器のシードをリセット（より自然な分散のため）
+		Utils._seedXorshift128();
+
+		// 設定を取得
+		APP_STATE.initialSpeedMode = Utils.getSelectedInitialSpeedMode();
+		APP_STATE.initialSpeedTotalTrials = Utils.getSelectedInitialSpeedTrials();
+		APP_STATE.initialSpeedCurrentTrial = 0;
+		APP_STATE.initialSpeedResults = [];
+		APP_STATE.initialSpeedCurrentMistakes = [];
+		APP_STATE.initialSpeedConsecutiveMisses = 0; // 連続ミスカウンターをリセット
+
+		// 初期状態設定
+		APP_STATE.initialSpeedState = "starting";
+
+		// 練習画面を表示
+		this.showInitialSpeedPracticeScreen();
+
+		// 開始処理
+		this.startInitialSpeedTrial();
+	},
+
+	// Initial Speed単一試行の開始
+	startInitialSpeedTrial() {
+		APP_STATE.initialSpeedCurrentTrial++;
+		APP_STATE.initialSpeedState = "starting";
+
+		// 文字を隠す
+		if (DOM.initialSpeedCharacter) {
+			DOM.initialSpeedCharacter.textContent = "";
+			DOM.initialSpeedCharacter.className = "initial-speed-character";
+		}
+
+		// 進捗を隠す
+		if (DOM.initialSpeedProgress) {
+			DOM.initialSpeedProgress.textContent = "";
+		}
+
+		// ステータス表示（初回のみ）
+		if (DOM.initialSpeedStatus) {
+			if (APP_STATE.initialSpeedCurrentTrial === 1) {
+				DOM.initialSpeedStatus.textContent = "Starting...";
+				DOM.initialSpeedStatus.className = "initial-speed-status";
+				DOM.initialSpeedStatus.style.color = ""; // 色をリセット
+			} else {
+				DOM.initialSpeedStatus.textContent = "";
+				DOM.initialSpeedStatus.style.color = ""; // 色をリセット
+			}
+		}
+
+		// 待機時間は常に1秒（ただし2回目以降はStarting...を表示しない）
+		const waitTime = CONSTANTS.INITIAL_SPEED_SETTINGS.WAITING_TIME;
+
+		// 待機後に文字表示
+		APP_STATE.initialSpeedTimer = setTimeout(() => {
+			this.showInitialSpeedCharacter();
+		}, waitTime);
+	},
+
+	// Initial Speed文字表示と計測開始
+	showInitialSpeedCharacter() {
+		// ランダム文字生成
+		APP_STATE.initialSpeedCurrentChar = Utils.generateInitialSpeedChar(
+			APP_STATE.initialSpeedMode,
+		);
+
+		// 文字表示（大文字で表示、但し数字や記号はそのまま）
+		if (DOM.initialSpeedCharacter) {
+			const displayChar = /[a-z]/.test(APP_STATE.initialSpeedCurrentChar) 
+				? APP_STATE.initialSpeedCurrentChar.toUpperCase() 
+				: APP_STATE.initialSpeedCurrentChar;
+			DOM.initialSpeedCharacter.textContent = displayChar;
+			DOM.initialSpeedCharacter.className = "initial-speed-character";
+		}
+
+		// ステータス更新
+		if (DOM.initialSpeedStatus) {
+			DOM.initialSpeedStatus.textContent = "";
+			DOM.initialSpeedStatus.style.color = ""; // 色をリセット
+		}
+
+		// 計測開始（0.1秒の入力ガード期間付き）
+		APP_STATE.initialSpeedStartTime = Date.now();
+		APP_STATE.initialSpeedState = "guarded"; // ガード状態
+
+		// 0.1秒後に入力受付開始（事前入力防止）
+		setTimeout(() => {
+			if (APP_STATE.initialSpeedState === "guarded") {
+				APP_STATE.initialSpeedState = "ready";
+			}
+		}, 100);
+	},
+
+	// Initial Speed入力処理
+	handleInitialSpeedInput(key) {
+		// ガード期間中は入力を無視（事前入力防止）
+		if (APP_STATE.initialSpeedState === "guarded") {
+			return;
+		}
+		
+		if (APP_STATE.initialSpeedState !== "ready") {
+			return;
+		}
+
+		const inputChar = key;
+		const expectedChar = APP_STATE.initialSpeedCurrentChar;
+		const reactionTime = Date.now() - APP_STATE.initialSpeedStartTime;
+
+		// 大文字小文字を区別しない照合（英字の場合のみ）
+		const isMatch = /[a-zA-Z]/.test(expectedChar) 
+			? inputChar.toLowerCase() === expectedChar.toLowerCase()
+			: inputChar === expectedChar;
+
+		if (isMatch) {
+			// 正解 - 連続ミスカウンターをリセット
+			APP_STATE.initialSpeedConsecutiveMisses = 0;
+			this.recordInitialSpeedResult(
+				true,
+				reactionTime,
+				inputChar,
+				expectedChar,
+			);
+			this.proceedToNextTrial();
+		} else {
+			// 不正解 - 連続ミスカウンターを増加
+			APP_STATE.initialSpeedConsecutiveMisses++;
+			
+			// 不正解 - 赤色表示、その場停止
+			if (DOM.initialSpeedCharacter) {
+				DOM.initialSpeedCharacter.className =
+					"initial-speed-character incorrect";
+			}
+
+			// ミス記録（時間も記録）
+			this.recordInitialSpeedResult(
+				false,
+				reactionTime,
+				inputChar,
+				expectedChar,
+			);
+
+			// 連続3回ミスでゲーム終了
+			if (APP_STATE.initialSpeedConsecutiveMisses >= 3) {
+				this.endInitialSpeedPracticeEarly();
+				return;
+			}
+			
+			// ミスタイプ時はその場で停止、正しい文字の入力を待つ
+		}
+	},
+
+	// Initial Speed練習の早期終了（連続3回ミス）
+	endInitialSpeedPracticeEarly() {
+		APP_STATE.initialSpeedState = "terminated";
+
+		// ステータス表示（英語、オレンジ色で威圧感を軽減）
+		if (DOM.initialSpeedStatus) {
+			DOM.initialSpeedStatus.textContent = "Practice terminated - 3 consecutive misses";
+			DOM.initialSpeedStatus.style.color = "#ff8c00"; // オレンジ色
+		}
+
+		// 文字を隠す
+		if (DOM.initialSpeedCharacter) {
+			DOM.initialSpeedCharacter.textContent = "";
+			DOM.initialSpeedCharacter.className = "initial-speed-character";
+		}
+
+		// 1.5秒後にスタート画面に戻る（リザルトなし）
+		setTimeout(() => {
+			this.resetInitialSpeedToStart();
+		}, 1500);
+	},
+
+	// Initial Speedをスタート画面にリセット（記録なし）
+	resetInitialSpeedToStart() {
+		// 状態をリセット
+		APP_STATE.initialSpeedState = "waiting";
+		APP_STATE.initialSpeedCurrentTrial = 0;
+		APP_STATE.initialSpeedResults = [];
+		APP_STATE.initialSpeedCurrentMistakes = [];
+		APP_STATE.initialSpeedConsecutiveMisses = 0;
+
+		// ステータスと文字をクリア
+		if (DOM.initialSpeedStatus) {
+			DOM.initialSpeedStatus.textContent = "";
+			DOM.initialSpeedStatus.style.color = ""; // 色をリセット
+		}
+		if (DOM.initialSpeedCharacter) {
+			DOM.initialSpeedCharacter.textContent = "";
+			DOM.initialSpeedCharacter.className = "initial-speed-character";
+		}
+
+		// 正常な初期化処理を呼び出して適切にスタート画面を表示
+		this.renderPage();
+	},
+
+	// Initial Speed結果記録
+	recordInitialSpeedResult(correct, time, inputChar, expectedChar) {
+		const result = {
+			trial: APP_STATE.initialSpeedCurrentTrial,
+			char: expectedChar,
+			time: time,
+			correct: correct,
+			inputChar: inputChar,
+		};
+
+		APP_STATE.initialSpeedResults.push(result);
+
+		// ミスの場合はミス記録にも追加
+		if (!correct) {
+			this.recordInitialSpeedMistake(expectedChar, inputChar);
+		}
+	},
+
+	// Initial Speedミス記録
+	recordInitialSpeedMistake(expectedChar, inputChar) {
+		APP_STATE.initialSpeedCurrentMistakes.push({ expectedChar, inputChar });
+
+		// Initial Speed専用のミス統計に記録
+		const languageName = this.getInitialSpeedLanguageName();
+		Storage.recordInitialSpeedMistake(languageName, expectedChar, inputChar);
+	},
+
+	// Initial Speed言語名取得
+	getInitialSpeedLanguageName() {
+		const mode = APP_STATE.initialSpeedMode;
+		return `Initial Speed (${Utils.getInitialSpeedModeDisplayName(mode)})`;
+	},
+
+	// Initial Speed次の試行への進行（進捗表示なし）
+	proceedToNextTrial() {
+		APP_STATE.initialSpeedState = "between";
+
+		// ステータスを隠す
+		if (DOM.initialSpeedStatus) {
+			DOM.initialSpeedStatus.textContent = "";
+		}
+
+		// 文字を隠す
+		if (DOM.initialSpeedCharacter) {
+			DOM.initialSpeedCharacter.textContent = "";
+			DOM.initialSpeedCharacter.className = "initial-speed-character";
+		}
+
+		// 進捗表示は削除（不要）
+		if (DOM.initialSpeedProgress) {
+			DOM.initialSpeedProgress.textContent = "";
+		}
+
+		// 次の試行または完了処理（待機時間なしで即座に実行）
+		if (
+			APP_STATE.initialSpeedCurrentTrial < APP_STATE.initialSpeedTotalTrials
+		) {
+			// 次の試行へ（即座に）
+			this.startInitialSpeedTrial();
+		} else {
+			// 完了（即座に）
+			this.completeInitialSpeedPractice();
+		}
+	},
+
+	// Initial Speed練習完了
+	completeInitialSpeedPractice() {
+		APP_STATE.initialSpeedState = "completed";
+
+		// ステータスと文字を隠す
+		if (DOM.initialSpeedStatus) {
+			DOM.initialSpeedStatus.textContent = "";
+		}
+		if (DOM.initialSpeedCharacter) {
+			DOM.initialSpeedCharacter.textContent = "";
+		}
+
+		// 統計計算
+		const stats = Utils.calculateInitialSpeedStats(
+			APP_STATE.initialSpeedResults,
+		);
+
+		// 言語名の取得
+		const languageName = this.getInitialSpeedLanguageName();
+		const trials = APP_STATE.initialSpeedTotalTrials;
+
+		// 統計保存（平均反応時間を秒単位で保存）
+		Stats.saveResult(
+			languageName,
+			1, // partNumber
+			1, // totalParts
+			0, // WPMは不要（0で保存）
+			stats.accuracy,
+			stats.averageTime / 1000, // 平均反応時間を秒に変換
+			trials, // 文字数として試行回数を使用
+		);
+
+		// リザルト画面表示
+		this.showInitialSpeedResults(stats);
+	},
+
+	// Initial Speedリザルト表示
+	showInitialSpeedResults(stats) {
+		// 詳細結果の生成
+		this.generateInitialSpeedDetailedResults();
+
+		// TOP3ランキングの取得
+		const languageName = this.getInitialSpeedLanguageName();
+		const top3Records = Stats.getTop3Records(languageName, 1);
+		const currentAverageTime = stats.averageTime / 1000; // 秒に変換
+		const rankStatus = Stats.checkRankIn(languageName, 1, currentAverageTime);
+
+		// 現在のセッションのミス統計
+		const sessionMistakes = this.getInitialSpeedSessionMistakes(3);
+
+		// リザルト表示の更新
+		this.updateInitialSpeedResultsDisplay(
+			stats,
+			top3Records,
+			rankStatus,
+			sessionMistakes,
+		);
+
+		// オーバーレイ表示
+		this.hideAllScreens();
+		UI.showOverlay(
+			APP_STATE.initialSpeedTotalTrials,
+			APP_STATE.initialSpeedTotalTrials,
+		);
+	},
+
+	// Initial Speed詳細結果生成
+	generateInitialSpeedDetailedResults() {
+		if (!DOM.initialSpeedDetailedResults) return;
+
+		const results = APP_STATE.initialSpeedResults;
+		const bestTime = Math.min(
+			...results.filter((r) => r.correct).map((r) => r.time),
+		);
+		const worstTime = Math.max(
+			...results.filter((r) => r.correct).map((r) => r.time),
+		);
+
+		let html = '<div class="initial-speed-trials-list">';
+
+		results.forEach((result) => {
+			const isBest = result.correct && result.time === bestTime;
+			const isWorst = result.correct && result.time === worstTime;
+			const missInfo = result.correct
+				? ""
+				: ` (Miss: pressed '${result.inputChar}')`;
+			const badge = isBest ? " ✓ (Best)" : isWorst ? " (Worst)" : "";
+
+			html += `
+				<div class="trial-result ${result.correct ? "correct" : "incorrect"}">
+					<span class="trial-number">Trial ${result.trial}:</span>
+					<span class="trial-char">${result.char}</span>
+					<span class="trial-arrow">→</span>
+					<span class="trial-time">${Utils.formatReactionTime(result.time)}${badge}</span>
+					<span class="trial-miss">${missInfo}</span>
+				</div>
+			`;
+		});
+
+		html += "</div>";
+		DOM.initialSpeedDetailedResults.innerHTML = html;
+	},
+
+	// Initial Speedリザルト表示更新
+	updateInitialSpeedResultsDisplay(
+		stats,
+		top3Records,
+		rankStatus,
+		sessionMistakes,
+	) {
+		// Initial Speed専用リザルトセクションを表示
+		if (DOM.initialSpeedResults) {
+			DOM.initialSpeedResults.style.display = "block";
+		}
+
+		// 通常の統計セクションを非表示
+		const statsListEl = document.querySelector(".stats-list");
+		if (statsListEl) {
+			statsListEl.style.display = "none";
+		}
+
+		// モード情報
+		if (DOM.initialSpeedModeInfo) {
+			DOM.initialSpeedModeInfo.textContent =
+				Utils.getInitialSpeedModeDisplayName(APP_STATE.initialSpeedMode);
+		}
+		if (DOM.initialSpeedTrialsInfo) {
+			DOM.initialSpeedTrialsInfo.textContent = `${APP_STATE.initialSpeedTotalTrials} trials`;
+		}
+
+		// サマリー統計
+		if (DOM.initialSpeedSummary) {
+			DOM.initialSpeedSummary.innerHTML = `
+				<div class="initial-speed-summary-grid">
+					<div class="summary-stat">
+						<span class="summary-label">Average:</span>
+						<span class="summary-value">${Utils.formatReactionTime(stats.averageTime)}</span>
+					</div>
+					<div class="summary-stat">
+						<span class="summary-label">Best Time:</span>
+						<span class="summary-value">${Utils.formatReactionTime(stats.bestTime)}</span>
+					</div>
+					<div class="summary-stat">
+						<span class="summary-label">Worst Time:</span>
+						<span class="summary-value">${Utils.formatReactionTime(stats.worstTime)}</span>
+					</div>
+					<div class="summary-stat">
+						<span class="summary-label">Accuracy:</span>
+						<span class="summary-value">${stats.accuracy}%</span>
+					</div>
+					<div class="summary-stat">
+						<span class="summary-label">Total Mistakes:</span>
+						<span class="summary-value">${stats.totalMistakes}</span>
+					</div>
+				</div>
+			`;
+		}
+
+		// ページバッジ
+		const pageBadgeEl = document.getElementById("page-badge");
+		if (pageBadgeEl) {
+			pageBadgeEl.textContent = `Initial Speed`;
+		}
+
+		// 文字数表示
+		const characterCountEl = document.getElementById("character-count");
+		if (characterCountEl) {
+			characterCountEl.textContent = `${APP_STATE.initialSpeedTotalTrials} trials`;
+		}
+
+		// TOP3ランキング表示
+		this.updateInitialSpeedRanking(top3Records, rankStatus, stats);
+
+		// ミス文字表示
+		this.updateInitialSpeedMistakes(sessionMistakes);
+	},
+
+	// Initial SpeedのTOP3ランキング更新
+	updateInitialSpeedRanking(top3Records, rankStatus, stats) {
+		const top3RankingEl = document.getElementById("top3-ranking");
+
+		// Initial SpeedモードではRanked表示を常に非表示にする
+		if (top3RankingEl) {
+			top3RankingEl.style.display = "none";
+		}
+	},
+
+	// Initial Speedミス文字表示更新
+	updateInitialSpeedMistakes(sessionMistakes) {
+		const mistakeCharsEl = document.getElementById("mistake-chars");
+
+		if (mistakeCharsEl && sessionMistakes.length > 0) {
+			mistakeCharsEl.style.display = "block";
+			const mistakeListEl = document.getElementById("mistake-list");
+
+			if (mistakeListEl) {
+				mistakeListEl.innerHTML = sessionMistakes
+					.map(
+						({ mistake, count }) =>
+							`<span class="mistake-char">${mistake} (${count})</span>`,
+					)
+					.join("");
+			}
+		} else if (mistakeCharsEl) {
+			mistakeCharsEl.style.display = "none";
+		}
+	},
+
+	// Initial Speedセッションミス統計取得
+	getInitialSpeedSessionMistakes(limit = 3) {
+		if (
+			!APP_STATE.initialSpeedCurrentMistakes ||
+			APP_STATE.initialSpeedCurrentMistakes.length === 0
+		) {
+			return [];
+		}
+
+		// ミスの集計
+		const mistakeCount = {};
+		APP_STATE.initialSpeedCurrentMistakes.forEach(
+			({ expectedChar, inputChar }) => {
+				const mistakeKey = Utils.generateMistakeKey(expectedChar, inputChar);
+				mistakeCount[mistakeKey] = (mistakeCount[mistakeKey] || 0) + 1;
+			},
+		);
+
+		// カウント順にソートして上位を返す
+		return Object.entries(mistakeCount)
+			.sort(([, a], [, b]) => b - a)
+			.slice(0, limit)
+			.map(([mistake, count]) => ({ mistake, count }));
 	},
 
 	// タイプウェルスタート画面の表示
@@ -226,6 +808,9 @@ const Typing = {
 				case "symbols":
 					modeDisplayEl.textContent = "With Symbols (a-z, A-Z, symbols)";
 					break;
+				case "numbers":
+					modeDisplayEl.textContent = "Numbers Only (0-9)";
+					break;
 				default:
 					modeDisplayEl.textContent = "Lowercase (a-z)";
 			}
@@ -283,6 +868,10 @@ const Typing = {
 	startTypeWellTyping() {
 		APP_STATE.typewellState = "typing";
 		this.hideTypeWellScreens();
+
+		// ライン記録の初期化
+		APP_STATE.typewellLineTimes = [];
+		APP_STATE.typewellCurrentLine = 0;
 
 		// タイピング開始前にページをレンダリング
 		this.renderNormalPage();
@@ -372,19 +961,20 @@ const Typing = {
 
 			// 改行マーカーの処理
 			if (line.trim() !== "" || idx === APP_STATE.allLines.length - 1) {
-				// TypeWellオリジナルモードまたは2バイト文字のみの行の場合は改行を表示しない
-				if (
-					DOM.langSel.value === "typewell" ||
-					this.isLineOnlyMultiByte(line)
-				) {
-					// 改行マーカーを表示しない（要素自体を作成しない）
+				const nl = document.createElement("span");
+
+				// TypeWellオリジナルモードでは改行も自動スキップ
+				// カスタムコードのTypeWellモードでは改行をタイピング対象にする
+				if (DOM.langSel.value === "typewell") {
+					nl.className = "char multibyte-skip newline";
+					// data-char属性を付けない = タイピング対象外
 				} else {
-					const nl = document.createElement("span");
 					nl.className = "char pending newline";
 					nl.dataset.char = "\n";
-					nl.textContent = "⏎";
-					charContainer.appendChild(nl);
 				}
+
+				nl.textContent = "⏎";
+				charContainer.appendChild(nl);
 			}
 
 			DOM.codeEl.appendChild(row);
@@ -425,9 +1015,13 @@ const Typing = {
 	resetState() {
 		clearInterval(APP_STATE.timerInterval);
 		clearInterval(APP_STATE.countdownTimer);
+		clearTimeout(APP_STATE.initialSpeedTimer);
+
 		APP_STATE.startTime = null;
 		APP_STATE.countdownTimer = null;
 		APP_STATE.countdownValue = 0;
+		APP_STATE.initialSpeedTimer = null;
+
 		DOM.timerEl.textContent = "0s";
 		DOM.wpmEl.textContent = "WPM: 0";
 		DOM.accEl.textContent = "Accuracy: 100%";
@@ -445,6 +1039,16 @@ const Typing = {
 		// タイプウェル状態のリセット
 		if (DOM.langSel.value === "typewell") {
 			APP_STATE.typewellState = "waiting";
+			APP_STATE.typewellLineTimes = [];
+			APP_STATE.typewellCurrentLine = 0;
+		}
+
+		// Initial Speed状態のリセット
+		if (this.isInitialSpeedMode()) {
+			APP_STATE.initialSpeedState = "waiting";
+			APP_STATE.initialSpeedCurrentTrial = 0;
+			APP_STATE.initialSpeedResults = [];
+			APP_STATE.initialSpeedCurrentMistakes = [];
 		}
 
 		this.currentHighlightIndex = -1;
@@ -708,7 +1312,12 @@ const Typing = {
 	nextPage() {
 		if (DOM.overlay.style.visibility === "visible") {
 			UI.hideOverlay(() => {
-				if (DOM.langSel.value === "typewell") {
+				if (this.isInitialSpeedMode()) {
+					// Initial Speedモードでは新しい練習を開始
+					this.preparePages();
+					this.resetState();
+					this.renderPage();
+				} else if (DOM.langSel.value === "typewell") {
 					// TypeWellオリジナルモードでは常に新しいランダムコードを生成
 					this.preparePages();
 					this.resetState();
@@ -729,8 +1338,8 @@ const Typing = {
 	retry() {
 		if (DOM.overlay.style.visibility === "visible") {
 			UI.hideOverlay(() => {
-				if (DOM.langSel.value === "typewell") {
-					// TypeWellオリジナルモードでは新しいランダムコードを生成
+				if (this.isInitialSpeedMode() || DOM.langSel.value === "typewell") {
+					// Initial SpeedモードまたはTypeWellオリジナルモードでは新しい練習を生成
 					this.preparePages();
 					this.resetState();
 					this.renderPage();
@@ -740,8 +1349,8 @@ const Typing = {
 				}
 			});
 		} else {
-			if (DOM.langSel.value === "typewell") {
-				// TypeWellオリジナルモードでは新しいランダムコードを生成
+			if (this.isInitialSpeedMode() || DOM.langSel.value === "typewell") {
+				// Initial SpeedモードまたはTypeWellオリジナルモードでは新しい練習を生成
 				this.preparePages();
 				this.resetState();
 				this.renderPage();
@@ -756,8 +1365,8 @@ const Typing = {
 	restartAll() {
 		if (DOM.overlay.style.visibility === "visible") {
 			UI.hideOverlay(() => {
-				if (DOM.langSel.value === "typewell") {
-					// TypeWellオリジナルモードでは新しいランダムコードを生成
+				if (this.isInitialSpeedMode() || DOM.langSel.value === "typewell") {
+					// Initial SpeedモードまたはTypeWellオリジナルモードでは新しい練習を生成
 					this.preparePages();
 					this.resetState();
 					this.renderPage();
@@ -769,8 +1378,8 @@ const Typing = {
 				}
 			});
 		} else {
-			if (DOM.langSel.value === "typewell") {
-				// TypeWellオリジナルモードでは新しいランダムコードを生成
+			if (this.isInitialSpeedMode() || DOM.langSel.value === "typewell") {
+				// Initial SpeedモードまたはTypeWellオリジナルモードでは新しい練習を生成
 				this.preparePages();
 				this.resetState();
 				this.renderPage();
@@ -788,6 +1397,24 @@ const Typing = {
 		// 休憩中の場合は入力を無視
 		if (APP_STATE.isBreakActive) {
 			return;
+		}
+
+		// Initial Speedモードの処理
+		if (this.isInitialSpeedMode()) {
+			if (APP_STATE.initialSpeedState === "waiting") {
+				// スタート待機中はスペースキーまたはエンターキーで開始
+				if (key === "Enter" || key === " ") {
+					this.startInitialSpeedPractice();
+				}
+				return;
+			} else if (APP_STATE.initialSpeedState === "ready") {
+				// 文字入力待機中
+				this.handleInitialSpeedInput(key);
+				return;
+			} else {
+				// その他の状態では入力を無視
+				return;
+			}
 		}
 
 		// タイプウェルオリジナルモードでスタート待機中の場合
@@ -848,6 +1475,17 @@ const Typing = {
 
 				// 正しい改行の場合のみ休憩判定
 				if (ch === "\n" && expectedChar === "\n") {
+					// タイプウェルモードの場合は行ラップタイムを記録
+					if (DOM.langSel.value === "typewell" && APP_STATE.startTime) {
+						const currentTime = Date.now();
+						const elapsedTime = (currentTime - APP_STATE.startTime) / 1000;
+						APP_STATE.typewellLineTimes.push({
+							line: APP_STATE.typewellCurrentLine + 1,
+							time: elapsedTime
+						});
+						APP_STATE.typewellCurrentLine++;
+					}
+					
 					this.checkAndShowBreak();
 				}
 			} else {
@@ -927,8 +1565,8 @@ const Typing = {
 			return;
 		}
 
-		// TypeWellモードではバックスペース無効
-		if (this.isTypeWellMode()) {
+		// Initial SpeedモードまたはTypeWellモードではバックスペース無効
+		if (this.isInitialSpeedMode() || this.isTypeWellMode()) {
 			return;
 		}
 

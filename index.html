@@ -25,6 +25,7 @@
             <option value="rust">Rust</option>
             <option value="lua">Lua</option>
             <option value="typewell">TypeWell Original</option>
+            <option value="initial-speed">Initial Speed</option>
             <option value="custom">Custom</option>
         </select>
         <button id="toggle-custom">Custom</button>
@@ -111,6 +112,37 @@
                     <input type="radio" name="typewell-mode" value="symbols" id="typewell-symbols">
                     <span class="typewell-radio-text">With Symbols (a-z, A-Z, symbols)</span>
                 </label>
+                <label class="typewell-radio-label">
+                    <input type="radio" name="typewell-mode" value="numbers" id="typewell-numbers">
+                    <span class="typewell-radio-text">Numbers Only (0-9)</span>
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <!-- Initial Speedモード選択 -->
+    <div id="initial-speed-container">
+        <div class="initial-speed-mode-selection">
+            <label class="initial-speed-mode-label">Character Set:</label>
+            <div class="initial-speed-modes">
+                <label class="initial-speed-radio-label">
+                    <input type="radio" name="initial-speed-mode" value="lowercase" id="initial-speed-lowercase"
+                        checked>
+                    <span class="initial-speed-radio-text">Lowercase + Punctuation (a-z, , .)</span>
+                </label>
+                <label class="initial-speed-radio-label">
+                    <input type="radio" name="initial-speed-mode" value="numbers" id="initial-speed-numbers">
+                    <span class="initial-speed-radio-text">Numbers Only (0-9)</span>
+                </label>
+            </div>
+            <div class="initial-speed-trials-section">
+                <label class="initial-speed-trials-label">Trials:</label>
+                <select id="initial-speed-trials" class="initial-speed-trials-select">
+                    <option value="5">5</option>
+                    <option value="10" selected>10</option>
+                    <option value="15">15</option>
+                    <option value="20">20</option>
+                </select>
             </div>
         </div>
     </div>
@@ -134,6 +166,33 @@
                 </div>
             </div>
 
+            <!-- Initial Speedスタート画面 -->
+            <div id="initial-speed-start-screen" style="display: none;">
+                <div class="initial-speed-start-content">
+                    <h2 class="initial-speed-start-title">Initial Speed</h2>
+                    <div class="initial-speed-start-info">
+                        <p>Reaction time measurement • <span id="initial-speed-trials-display">10</span> trials</p>
+                        <p class="initial-speed-mode-display">Mode: <span id="initial-speed-current-mode">Lowercase +
+                                Punctuation</span></p>
+                    </div>
+                    <div class="initial-speed-start-instruction">
+                        <div class="initial-speed-start-key">
+                            <button id="initial-speed-start-button" class="start-key">Start</button>
+                        </div>
+                        <p>Click Start to begin</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Initial Speed練習画面 -->
+            <div id="initial-speed-practice-screen" style="display: none;">
+                <div class="initial-speed-practice-content">
+                    <div id="initial-speed-status" class="initial-speed-status"></div>
+                    <div id="initial-speed-character" class="initial-speed-character"></div>
+                    <div id="initial-speed-progress" class="initial-speed-progress"></div>
+                </div>
+            </div>
+
             <!-- タイプウェルカウントダウン -->
             <div id="typewell-countdown" style="display: none;">
                 <div class="typewell-countdown-content">
@@ -152,6 +211,20 @@
 
                 <div class="page-info">
                     <span id="page-badge">Page 1/1</span> • <span id="character-count">0 characters</span>
+                </div>
+
+                <!-- Initial Speed専用リザルト -->
+                <div id="initial-speed-results" class="initial-speed-results-section" style="display: none;">
+                    <div class="initial-speed-results-header">
+                        <span id="initial-speed-mode-info">Lowercase + Punctuation</span> •
+                        <span id="initial-speed-trials-info">10 trials</span>
+                    </div>
+                    <div id="initial-speed-summary" class="initial-speed-summary">
+                        <!-- サマリー統計がここに表示される -->
+                    </div>
+                    <div id="initial-speed-detailed-results" class="initial-speed-detailed-results">
+                        <!-- 詳細結果がここに表示される -->
+                    </div>
                 </div>
 
                 <div class="stats-list">
@@ -366,6 +439,20 @@
                 </div>
 
                 <div class="help-section">
+                    <h4>⌨️ Initial Speed Mode</h4>
+                    <p>Practice single character reaction times for typing speed improvement:</p>
+                    <ul>
+                        <li><strong>Character Sets:</strong> Choose between lowercase + punctuation (a-z, comma, period)
+                            or numbers only (0-9)</li>
+                        <li><strong>Trials:</strong> Configure number of trials from 5 to 20</li>
+                        <li><strong>Measurement:</strong> Precise reaction time measurement in milliseconds</li>
+                        <li><strong>No Mistakes:</strong> Must type correct character to proceed (no backspace)</li>
+                        <li><strong>Statistics:</strong> Detailed timing analysis with best/worst/average times</li>
+                        <li><strong>Rankings:</strong> TOP3 records based on average reaction time</li>
+                    </ul>
+                </div>
+
+                <div class="help-section">
                     <h4>📈 Statistics Tracking</h4>
                     <p>Click the <strong>📊 Stats</strong> button to view your detailed practice history:</p>
                     <ul>
@@ -405,6 +492,8 @@
                         <li><strong>Don't rush:</strong> Maintain steady rhythm and avoid hunting for keys</li>
                         <li><strong>Review your stats:</strong> Identify patterns and areas for improvement</li>
                         <li><strong>Try TypeWell Mode:</strong> Use strict mode for better accuracy training</li>
+                        <li><strong>Practice Initial Speed:</strong> Improve reaction times with single character drills
+                        </li>
                     </ul>
                 </div>
 

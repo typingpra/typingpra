@@ -95,6 +95,11 @@ const Theme = {
 			return;
 		}
 
+		// Initial Speedモードでは何もしない
+		if (Typing.isInitialSpeedMode()) {
+			return;
+		}
+
 		// ページを再レンダリングして構造を完全に更新
 		if (typeof Typing !== "undefined" && Typing.renderPage) {
 			Typing.renderPage();

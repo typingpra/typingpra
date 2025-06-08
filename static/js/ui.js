@@ -5,6 +5,12 @@ const UI = {
 	showOverlay(correct, total) {
 		clearInterval(APP_STATE.timerInterval);
 
+		// Initial Speedモードの場合は専用処理
+		if (Typing.isInitialSpeedMode()) {
+			this.showInitialSpeedOverlay();
+			return;
+		}
+
 		const finalAccuracy =
 			APP_STATE.totalKeystrokes > 0
 				? Math.round(
@@ -36,6 +42,9 @@ const UI = {
 					break;
 				case "symbols":
 					languageName = "TypeWell Original (With Symbols)";
+					break;
+				case "numbers":
+					languageName = "TypeWell Original (Numbers Only)";
 					break;
 				default:
 					languageName = "TypeWell Original";
@@ -168,8 +177,50 @@ const UI = {
 		}
 
 		// ボタンテキストの更新（Enterキーヒント付き）
+		this.updateOverlayButtons();
+
+		// フェードイン効果でオーバーレイを表示
+		if (DOM.overlay) {
+			DOM.overlay.style.visibility = "visible";
+			DOM.overlay.classList.remove("hide");
+			setTimeout(() => {
+				DOM.overlay.classList.add("show");
+			}, 10);
+		}
+	},
+
+	// Initial Speed専用オーバーレイ表示
+	showInitialSpeedOverlay() {
+		// Initial Speedリザルトセクションを表示
+		if (DOM.initialSpeedResults) {
+			DOM.initialSpeedResults.style.display = "block";
+		}
+
+		// 通常の統計セクションを非表示
+		const statsListEl = document.querySelector(".stats-list");
+		if (statsListEl) {
+			statsListEl.style.display = "none";
+		}
+
+		// ボタンテキストの更新
+		this.updateOverlayButtons();
+
+		// フェードイン効果でオーバーレイを表示
+		if (DOM.overlay) {
+			DOM.overlay.style.visibility = "visible";
+			DOM.overlay.classList.remove("hide");
+			setTimeout(() => {
+				DOM.overlay.classList.add("show");
+			}, 10);
+		}
+	},
+
+	// オーバーレイボタンテキストの更新
+	updateOverlayButtons() {
 		if (DOM.nextBtn) {
-			if (DOM.langSel.value === "typewell") {
+			if (Typing.isInitialSpeedMode()) {
+				DOM.nextBtn.textContent = "New Practice (Enter)";
+			} else if (DOM.langSel.value === "typewell") {
 				DOM.nextBtn.textContent = "New Practice (Enter)";
 			} else {
 				DOM.nextBtn.textContent =
@@ -179,30 +230,26 @@ const UI = {
 			}
 		}
 
-		// TypeWellモードでは Retry と Restart All ボタンも "New Practice" に
-		const isTypeWellMode = Typing.isTypeWellMode();
-		if (DOM.retryBtn && (DOM.langSel.value === "typewell" || isTypeWellMode)) {
-			DOM.retryBtn.textContent = "New Practice (r)";
-		} else if (DOM.retryBtn) {
-			DOM.retryBtn.textContent = "Retry (r)";
+		// TypeWellモードやInitial SpeedモードではRetryとRestart Allボタンも"New Practice"に
+		const isSpecialMode =
+			Typing.isInitialSpeedMode() ||
+			DOM.langSel.value === "typewell" ||
+			Typing.isTypeWellMode();
+
+		if (DOM.retryBtn) {
+			if (isSpecialMode) {
+				DOM.retryBtn.textContent = "New Practice (r)";
+			} else {
+				DOM.retryBtn.textContent = "Retry (r)";
+			}
 		}
 
-		if (
-			DOM.restartBtn &&
-			(DOM.langSel.value === "typewell" || isTypeWellMode)
-		) {
-			DOM.restartBtn.textContent = "New Practice (R)";
-		} else if (DOM.restartBtn) {
-			DOM.restartBtn.textContent = "Restart All (R)";
-		}
-
-		// フェードイン効果でオーバーレイを表示
-		if (DOM.overlay) {
-			DOM.overlay.style.visibility = "visible";
-			DOM.overlay.classList.remove("hide");
-			setTimeout(() => {
-				DOM.overlay.classList.add("show");
-			}, 10);
+		if (DOM.restartBtn) {
+			if (isSpecialMode) {
+				DOM.restartBtn.textContent = "New Practice (R)";
+			} else {
+				DOM.restartBtn.textContent = "Restart All (R)";
+			}
 		}
 	},
 
@@ -215,6 +262,18 @@ const UI = {
 			setTimeout(() => {
 				DOM.overlay.style.visibility = "hidden";
 				DOM.overlay.classList.remove("hide");
+
+				// Initial Speedリザルトセクションを非表示に戻す
+				if (DOM.initialSpeedResults) {
+					DOM.initialSpeedResults.style.display = "none";
+				}
+
+				// 通常の統計セクションを表示に戻す
+				const statsListEl = document.querySelector(".stats-list");
+				if (statsListEl) {
+					statsListEl.style.display = "block";
+				}
+
 				if (callback) callback();
 			}, 400);
 		}
@@ -222,6 +281,69 @@ const UI = {
 
 	// 言語変更時の処理
 	handleLanguageChange() {
+		// リザルト表示中の場合は、背景モードを即座に更新してからオーバーレイを非表示
+		if (DOM.overlay && DOM.overlay.classList.contains("show")) {
+			// 背景のモード状態を即座に更新
+			this.updateBackgroundModeStyles();
+			this.hideOverlay(() => {
+				this.performLanguageChange();
+			});
+			return;
+		}
+
+		this.performLanguageChange();
+	},
+
+	// 背景のモード状態を即座に更新（リザルト表示中専用）
+	updateBackgroundModeStyles() {
+		// 全てのモードクラスをクリア
+		document.body.classList.remove("initial-speed-mode");
+		document.body.classList.remove("typewell-mode");
+		document.body.classList.remove("typewell-original-mode");
+
+		// 現在選択されている言語に応じてクラスを追加
+		if (DOM.langSel.value === "initial-speed") {
+			document.body.classList.add("initial-speed-mode");
+		} else if (DOM.langSel.value === "typewell") {
+			document.body.classList.add("typewell-mode");
+			document.body.classList.add("typewell-original-mode");
+		}
+
+		// コンテナの表示/非表示も即座に更新
+		if (DOM.initialSpeedContainer) {
+			DOM.initialSpeedContainer.style.display = 
+				DOM.langSel.value === "initial-speed" ? "block" : "none";
+		}
+		if (DOM.typewellContainer) {
+			DOM.typewellContainer.style.display = 
+				DOM.langSel.value === "typewell" ? "block" : "none";
+		}
+		if (DOM.customContainer) {
+			DOM.customContainer.style.display = 
+				DOM.langSel.value === "custom" ? "flex" : "none";
+		}
+	},
+
+	// 実際の言語変更処理
+	performLanguageChange() {
+		// 現在表示されている特別な画面をすべて非表示にする
+		this.hideAllSpecialScreens();
+
+		// Initial Speedモードのスタイル制御
+		if (DOM.langSel.value === "initial-speed") {
+			document.body.classList.add("initial-speed-mode");
+			// Initial Speedモード選択UIを表示
+			if (DOM.initialSpeedContainer) {
+				DOM.initialSpeedContainer.style.display = "block";
+			}
+		} else {
+			document.body.classList.remove("initial-speed-mode");
+			// Initial Speedモード選択UIを非表示
+			if (DOM.initialSpeedContainer) {
+				DOM.initialSpeedContainer.style.display = "none";
+			}
+		}
+
 		// TypeWellオリジナルモードのスタイル制御
 		if (DOM.langSel.value === "typewell") {
 			document.body.classList.add("typewell-mode");
@@ -252,16 +374,44 @@ const UI = {
 		Typing.renderPage();
 	},
 
+	// すべての特別画面を非表示にする
+	hideAllSpecialScreens() {
+		// Initial Speed画面を非表示
+		if (DOM.initialSpeedStartScreen) {
+			DOM.initialSpeedStartScreen.style.display = "none";
+		}
+		if (DOM.initialSpeedPracticeScreen) {
+			DOM.initialSpeedPracticeScreen.style.display = "none";
+		}
+
+		// TypeWell画面を非表示
+		if (DOM.typewellStartScreen) {
+			DOM.typewellStartScreen.style.display = "none";
+		}
+		if (DOM.typewellCountdown) {
+			DOM.typewellCountdown.style.display = "none";
+		}
+
+		// 通常のコード表示を戻す
+		if (DOM.codeEl) {
+			DOM.codeEl.style.display = "block";
+		}
+	},
+
 	// カスタムコード入力時の処理
 	handleCustomCodeInput() {
 		if (DOM.langSel.value === "custom") {
 			// TypeWellモードのスタイルを削除（カスタムコードなので）
 			document.body.classList.remove("typewell-mode");
 			document.body.classList.remove("typewell-original-mode");
+			document.body.classList.remove("initial-speed-mode");
 
-			// TypeWellコンテナを非表示
+			// TypeWellとInitial Speedコンテナを非表示
 			if (DOM.typewellContainer) {
 				DOM.typewellContainer.style.display = "none";
+			}
+			if (DOM.initialSpeedContainer) {
+				DOM.initialSpeedContainer.style.display = "none";
 			}
 
 			Typing.preparePages();
@@ -389,7 +539,8 @@ const UI = {
 			if (
 				!SNIPPETS[currentLang] &&
 				currentLang !== "custom" &&
-				currentLang !== "typewell"
+				currentLang !== "typewell" &&
+				currentLang !== "initial-speed"
 			) {
 				DOM.langSel.value = "python";
 			}
@@ -431,10 +582,14 @@ const UI = {
 			// TypeWellモードのスタイルをリセット
 			document.body.classList.remove("typewell-mode");
 			document.body.classList.remove("typewell-original-mode");
+			document.body.classList.remove("initial-speed-mode");
 
-			// TypeWellコンテナを非表示
+			// TypeWellとInitial Speedコンテナを非表示
 			if (DOM.typewellContainer) {
 				DOM.typewellContainer.style.display = "none";
+			}
+			if (DOM.initialSpeedContainer) {
+				DOM.initialSpeedContainer.style.display = "none";
 			}
 
 			// 休憩設定をデフォルトに戻す
@@ -473,6 +628,39 @@ const UI = {
 				Typing.preparePages();
 				Typing.resetState();
 				Typing.renderPage();
+			}
+		}
+	},
+
+	// Initial Speedモード変更時の処理
+	handleInitialSpeedModeChange() {
+		// Initial Speedモードが選択されている場合のみ処理
+		if (DOM.langSel.value === "initial-speed") {
+			// モード表示を更新
+			if (
+				typeof Typing !== "undefined" &&
+				Typing.updateInitialSpeedStartDisplay
+			) {
+				Typing.updateInitialSpeedStartDisplay();
+			}
+
+			// 待機状態の場合は表示を更新
+			if (APP_STATE.initialSpeedState === "waiting") {
+				Typing.renderPage();
+			}
+		}
+	},
+
+	// Initial Speed試行回数変更時の処理
+	handleInitialSpeedTrialsChange() {
+		// Initial Speedモードが選択されている場合のみ処理
+		if (DOM.langSel.value === "initial-speed") {
+			// 表示を更新
+			if (
+				typeof Typing !== "undefined" &&
+				Typing.updateInitialSpeedStartDisplay
+			) {
+				Typing.updateInitialSpeedStartDisplay();
 			}
 		}
 	},

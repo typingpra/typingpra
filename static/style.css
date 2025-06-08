@@ -188,6 +188,91 @@ header button {
 	user-select: none;
 }
 
+/* Initial Speedコンテナのスタイル */
+#initial-speed-container {
+	display: none;
+	padding: 10px 20px;
+	background: var(--panel-bg);
+	transition: background-color 0.3s;
+	border: none;
+	border-bottom: none;
+}
+
+.initial-speed-mode-selection {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.initial-speed-mode-label {
+	font-weight: bold;
+	color: var(--text-color);
+	font-family: "Courier New", monospace;
+	font-size: 14px;
+}
+
+.initial-speed-modes {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.initial-speed-radio-label {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	color: var(--text-color);
+	font-family: "Courier New", monospace;
+	font-size: 12px;
+	cursor: pointer;
+	transition: color 0.2s ease;
+}
+
+.initial-speed-radio-label:hover {
+	color: var(--progress-color);
+}
+
+.initial-speed-radio-label input[type="radio"] {
+	width: 16px;
+	height: 16px;
+	accent-color: var(--progress-color);
+	cursor: pointer;
+}
+
+.initial-speed-radio-text {
+	user-select: none;
+}
+
+.initial-speed-trials-section {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin-top: 10px;
+}
+
+.initial-speed-trials-label {
+	font-weight: bold;
+	color: var(--text-color);
+	font-family: "Courier New", monospace;
+	font-size: 14px;
+}
+
+.initial-speed-trials-select {
+	background: var(--button-bg);
+	color: var(--text-color);
+	border: 1px solid var(--border-color);
+	padding: 4px 8px;
+	border-radius: 4px;
+	font-family: "Courier New", monospace;
+	font-size: 12px;
+	cursor: pointer;
+	transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+}
+
+.initial-speed-trials-select:hover {
+	background: var(--border-color);
+}
+
 /* カスタムコードモード選択のスタイル */
 .custom-mode-selection {
 	display: flex;
@@ -266,6 +351,138 @@ header button {
 	padding: 20px 20px 0 20px;
 	overflow: auto;
 	position: relative;
+}
+
+/* Initial Speedスタート画面のスタイル */
+#initial-speed-start-screen {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	display: flex;
+	align-items: flex-start;
+	justify-content: center;
+	background: var(--bg-color);
+	z-index: 10;
+	padding: 100px 0 0 0;
+	transform: translateX(-15%);
+}
+
+.initial-speed-start-content {
+	text-align: center;
+	padding: 30px;
+	border: 1px solid var(--border-color);
+	border-radius: 8px;
+	background: var(--panel-bg);
+	min-width: 300px;
+	max-width: 400px;
+}
+
+.initial-speed-start-title {
+	font-size: 24px;
+	font-weight: bold;
+	color: var(--progress-color);
+	margin: 0 0 15px 0;
+	font-family: "Courier New", monospace;
+}
+
+.initial-speed-start-info {
+	margin-bottom: 25px;
+	color: var(--text-color);
+	font-family: "Courier New", monospace;
+}
+
+.initial-speed-start-info p {
+	margin: 6px 0;
+	font-size: 13px;
+}
+
+.initial-speed-mode-display {
+	font-weight: bold;
+	color: var(--progress-color);
+}
+
+.initial-speed-start-instruction {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 12px;
+}
+
+.initial-speed-start-key {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+/* Initial Speed練習画面のスタイル - スタート画面と同じ位置に統一 */
+#initial-speed-practice-screen {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	display: flex;
+	align-items: flex-start;
+	justify-content: center;
+	background: var(--bg-color);
+	z-index: 10;
+	padding: 100px 0 0 0;
+	transform: translateX(-15%);
+}
+
+.initial-speed-practice-content {
+	text-align: center;
+	padding: 30px;
+	min-width: 300px;
+	max-width: 400px;
+	position: relative;
+}
+
+.initial-speed-status {
+	position: absolute;
+	top: 120px;
+	left: 0;
+	right: 0;
+	font-size: 20px;
+	color: var(--pending-color);
+	font-family: "Courier New", monospace;
+	min-height: 40px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-weight: bold;
+	padding: 10px 20px;
+}
+
+.initial-speed-character {
+	font-size: 90px;
+	font-weight: 600;
+	color: var(--text-color);
+	font-family: "Consolas", "Monaco", "Lucida Console", "Liberation Mono", "DejaVu Sans Mono", "Bitstream Vera Sans Mono", "Courier New", monospace;
+	margin: 60px 0 40px -30px;
+	min-height: 100px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	transition: color 0.2s ease;
+}
+
+.initial-speed-character.incorrect {
+	color: var(--incorrect-color);
+	background: var(--incorrect-bg);
+	border-radius: 4px;
+	padding: 5px 10px;
+}
+
+.initial-speed-progress {
+	font-size: 16px;
+	color: var(--pending-color);
+	font-family: "Courier New", monospace;
+	margin-top: 30px;
+	min-height: 40px;
+	white-space: pre-line;
 }
 
 /* タイプウェルスタート画面のスタイル - 中央よりやや左上に配置 */
@@ -431,6 +648,28 @@ body.typewell-original-mode .char {
 body.typewell-original-mode .lineno {
 	font-size: 20px;
 	line-height: 1.6;
+}
+
+/* Initial Speedモード専用スタイル */
+body.initial-speed-mode #stats {
+	display: none; /* Initial Speedモードでは統計表示を隠す */
+}
+
+body.initial-speed-mode #progress-bar {
+	display: none; /* Initial Speedモードではプログレスバーを隠す */
+}
+
+/* Initial Speedモードでは背景のコード表示エリアを完全に非表示 */
+body.initial-speed-mode #code {
+	display: none !important; /* コード表示エリアを隠す */
+}
+
+body.initial-speed-mode #container {
+	background: transparent; /* コンテナ背景を透明に */
+}
+
+body.initial-speed-mode #code-pane {
+	background: transparent; /* コードペインの背景を透明に */
 }
 
 #code .line {
@@ -615,6 +854,107 @@ body.typewell-original-mode .lineno {
 	color: var(--progress-color);
 }
 
+/* Initial Speed専用リザルトセクション */
+.initial-speed-results-section {
+	margin-bottom: 30px;
+}
+
+.initial-speed-results-header {
+	font-size: 14px;
+	color: var(--pending-color);
+	margin-bottom: 20px;
+	padding-bottom: 15px;
+	border-bottom: 1px solid var(--border-color);
+}
+
+.initial-speed-summary {
+	margin-bottom: 25px;
+}
+
+.initial-speed-summary-grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 15px;
+}
+
+.summary-stat {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	padding: 12px;
+	background: var(--panel-bg);
+	border-radius: 4px;
+	border: 1px solid var(--border-color);
+}
+
+.summary-label {
+	font-size: 12px;
+	color: var(--pending-color);
+	margin-bottom: 5px;
+	font-family: "Courier New", monospace;
+}
+
+.summary-value {
+	font-size: 16px;
+	font-weight: bold;
+	color: var(--text-color);
+	font-family: "Courier New", monospace;
+}
+
+.initial-speed-detailed-results {
+	max-height: 200px;
+	overflow-y: auto;
+	border: 1px solid var(--border-color);
+	border-radius: 4px;
+}
+
+.initial-speed-trials-list {
+	padding: 10px;
+}
+
+.trial-result {
+	display: grid;
+	grid-template-columns: 60px 30px 20px 100px 1fr;
+	gap: 8px;
+	align-items: center;
+	padding: 6px 8px;
+	font-family: "Courier New", monospace;
+	font-size: 12px;
+	border-bottom: 1px solid var(--border-color);
+}
+
+.trial-result:last-child {
+	border-bottom: none;
+}
+
+.trial-result.incorrect {
+	background: var(--incorrect-bg);
+}
+
+.trial-number {
+	color: var(--pending-color);
+}
+
+.trial-char {
+	font-weight: bold;
+	text-align: center;
+}
+
+.trial-arrow {
+	color: var(--pending-color);
+	text-align: center;
+}
+
+.trial-time {
+	font-weight: bold;
+	color: var(--text-color);
+}
+
+.trial-miss {
+	color: var(--incorrect-color);
+	font-size: 11px;
+}
+
 /* TOP3ランキング表示のスタイル */
 .top3-ranking-section {
 	margin-bottom: 25px;
@@ -676,6 +1016,13 @@ body.typewell-original-mode .lineno {
 
 .rank-wpm {
 	font-size: 16px;
+	font-weight: bold;
+	color: var(--text-color);
+	text-align: right;
+}
+
+.rank-time {
+	font-size: 14px;
 	font-weight: bold;
 	color: var(--text-color);
 	text-align: right;
@@ -1195,6 +1542,48 @@ body.typewell-original-mode .lineno {
 	display: block;
 }
 
+.language-actions {
+	text-align: right;
+	margin: 0;
+	padding: 0;
+}
+
+.language-delete-btn {
+	background: none;
+	color: var(--pending-color);
+	border: none;
+	font-family: "Courier New", monospace;
+	font-size: 11px;
+	cursor: pointer;
+	transition: color 0.2s ease;
+}
+
+.language-delete-btn:hover {
+	color: var(--incorrect-color);
+	text-decoration: underline;
+}
+
+.mistake-actions {
+	text-align: right;
+	margin: 0;
+	padding: 0;
+}
+
+.mistake-delete-btn {
+	background: none;
+	color: var(--pending-color);
+	border: none;
+	font-family: "Courier New", monospace;
+	font-size: 11px;
+	cursor: pointer;
+	transition: color 0.2s ease;
+}
+
+.mistake-delete-btn:hover {
+	color: var(--incorrect-color);
+	text-decoration: underline;
+}
+
 .part-section {
 	margin-bottom: 15px;
 	border: 1px solid var(--border-color);
@@ -1330,7 +1719,46 @@ body.typewell-original-mode .lineno {
 	border: 1px solid var(--incorrect-color);
 }
 
-/* 統計画面の苦手文字スタイル */
+/* 統計画面の苦手文字スタイル - 言語統計と同じデザイン */
+.mistake-section {
+	margin-bottom: 20px;
+	border: 1px solid var(--border-color);
+	border-radius: 4px;
+}
+
+.mistake-header {
+	padding: 12px 15px;
+	background: var(--panel-bg);
+	border-bottom: 1px solid var(--border-color);
+	cursor: pointer;
+	font-family: "Courier New", monospace;
+	font-weight: bold;
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+}
+
+.mistake-header:hover {
+	background: var(--border-color);
+}
+
+.mistake-header .expand-icon {
+	transition: transform 0.2s ease;
+}
+
+.mistake-header.expanded .expand-icon {
+	transform: rotate(90deg);
+}
+
+.mistake-content {
+	display: none;
+	padding: 15px;
+}
+
+.mistake-content.show {
+	display: block;
+}
+
 .mistake-stats-section {
 	margin-bottom: 25px;
 	padding: 20px;
@@ -1344,6 +1772,14 @@ body.typewell-original-mode .lineno {
 	color: var(--progress-color);
 	font-family: "Courier New", monospace;
 	font-size: 16px;
+}
+
+.mistake-stats-section h5 {
+	margin: 0 0 10px 0;
+	color: var(--text-color);
+	font-family: "Courier New", monospace;
+	font-size: 14px;
+	font-weight: bold;
 }
 
 .mistake-stats-grid {

@@ -12,10 +12,10 @@ const CustomCode = {
 			return;
 		}
 
-		// 保存されたカスタムコード用のオプションを削除（デフォルト言語とCustomオプションは保持）
+		// 保存されたカスタムコード用のオプションを削除（デフォルト言語、TypeWell、Initial Speed、Customオプションは保持）
 		const allOptions = Array.from(DOM.langSel.children);
 		allOptions.forEach((option) => {
-			// デフォルト言語とCustomオプション以外を削除
+			// デフォルト言語、TypeWell、Initial Speed、Customオプション以外を削除
 			if (!SNIPPETS[option.value] && option.value !== "custom") {
 				option.remove();
 			}
@@ -47,7 +47,8 @@ const CustomCode = {
 			(SNIPPETS[currentValue] ||
 				codes[currentValue] ||
 				currentValue === "custom" ||
-				currentValue === "typewell")
+				currentValue === "typewell" ||
+				currentValue === "initial-speed")
 		) {
 			DOM.langSel.value = currentValue;
 		}
@@ -139,13 +140,17 @@ const CustomCode = {
 		DOM.customContainer.style.display = "none";
 		DOM.toggleCustomBtn.textContent = "Custom";
 
-		// TypeWellモードのスタイルを削除
+		// TypeWellモードとInitial Speedモードのスタイルを削除
 		document.body.classList.remove("typewell-mode");
 		document.body.classList.remove("typewell-original-mode");
+		document.body.classList.remove("initial-speed-mode");
 
-		// TypeWellコンテナを非表示
+		// TypeWellとInitial Speedコンテナを非表示
 		if (DOM.typewellContainer) {
 			DOM.typewellContainer.style.display = "none";
+		}
+		if (DOM.initialSpeedContainer) {
+			DOM.initialSpeedContainer.style.display = "none";
 		}
 
 		// ページを再準備
@@ -182,13 +187,17 @@ const CustomCode = {
 
 			DOM.customNameInput.value = selectedName;
 
-			// TypeWellモードのスタイルを削除（カスタムコードなので）
+			// TypeWellモードとInitial Speedモードのスタイルを削除（カスタムコードなので）
 			document.body.classList.remove("typewell-mode");
 			document.body.classList.remove("typewell-original-mode");
+			document.body.classList.remove("initial-speed-mode");
 
-			// TypeWellコンテナを非表示
+			// TypeWellとInitial Speedコンテナを非表示
 			if (DOM.typewellContainer) {
 				DOM.typewellContainer.style.display = "none";
+			}
+			if (DOM.initialSpeedContainer) {
+				DOM.initialSpeedContainer.style.display = "none";
 			}
 
 			Typing.preparePages();
@@ -214,13 +223,17 @@ const CustomCode = {
 			if (DOM.langSel.value === selectedName) {
 				DOM.langSel.value = "python";
 
-				// TypeWellモードのスタイルを削除
+				// TypeWellモードとInitial Speedモードのスタイルを削除
 				document.body.classList.remove("typewell-mode");
 				document.body.classList.remove("typewell-original-mode");
+				document.body.classList.remove("initial-speed-mode");
 
-				// TypeWellコンテナを非表示
+				// TypeWellとInitial Speedコンテナを非表示
 				if (DOM.typewellContainer) {
 					DOM.typewellContainer.style.display = "none";
+				}
+				if (DOM.initialSpeedContainer) {
+					DOM.initialSpeedContainer.style.display = "none";
 				}
 
 				Typing.preparePages();
@@ -246,15 +259,17 @@ const CustomCode = {
 			DOM.toggleCustomBtn.textContent = "Close";
 			DOM.langSel.value = "custom";
 
-			// TypeWellモードのスタイルを削除
+			// TypeWellモードとInitial Speedモードのスタイルを削除
 			document.body.classList.remove("typewell-mode");
 			document.body.classList.remove("typewell-original-mode");
-			document.body.classList.remove("typewell-original-mode");
-			document.body.classList.remove("typewell-original-mode");
+			document.body.classList.remove("initial-speed-mode");
 
-			// TypeWellコンテナを非表示
+			// TypeWellとInitial Speedコンテナを非表示
 			if (DOM.typewellContainer) {
 				DOM.typewellContainer.style.display = "none";
+			}
+			if (DOM.initialSpeedContainer) {
+				DOM.initialSpeedContainer.style.display = "none";
 			}
 
 			Typing.preparePages();
@@ -314,14 +329,17 @@ const CustomCode = {
 
 				// ページを再準備（自動保存はしない）
 				if (DOM.langSel.value === "custom") {
-					// TypeWellモードのスタイルを削除（カスタムコードなので）
+					// TypeWellモードとInitial Speedモードのスタイルを削除（カスタムコードなので）
 					document.body.classList.remove("typewell-mode");
 					document.body.classList.remove("typewell-original-mode");
-					document.body.classList.remove("typewell-original-mode");
+					document.body.classList.remove("initial-speed-mode");
 
-					// TypeWellコンテナを非表示
+					// TypeWellとInitial Speedコンテナを非表示
 					if (DOM.typewellContainer) {
 						DOM.typewellContainer.style.display = "none";
+					}
+					if (DOM.initialSpeedContainer) {
+						DOM.initialSpeedContainer.style.display = "none";
 					}
 
 					Typing.preparePages();

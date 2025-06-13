@@ -6,6 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Typing Practice</title>
     <link rel="stylesheet" href="static/style.css">
+    <script src="static/js/chart.min.js"></script>
 </head>
 
 <body tabindex="0">
@@ -25,7 +26,9 @@
             <option value="rust">Rust</option>
             <option value="lua">Lua</option>
             <option value="typewell">TypeWell Original</option>
+            <option value="typewell-english-words">TypeWell English Words</option>
             <option value="initial-speed">Initial Speed</option>
+            <option value="word-practice">Word Practice</option>
             <option value="custom">Custom</option>
         </select>
         <button id="toggle-custom">Custom</button>
@@ -50,6 +53,23 @@
     <!-- プログレスバーをヘッダーの直下に移動 -->
     <div id="progress-bar">
         <div id="progress"></div>
+    </div>
+
+    <!-- デフォルト言語のTypewellモード選択 -->
+    <div id="default-language-mode-container" style="display: none; padding: 10px 20px; background: var(--panel-bg); transition: background-color 0.3s; border: none; border-bottom: none;">
+        <div class="default-mode-selection" style="margin-bottom: 10px;">
+            <label class="default-mode-label">Mode:</label>
+            <div class="default-modes">
+                <label class="default-radio-label">
+                    <input type="radio" name="default-mode" value="normal" id="default-normal" checked>
+                    <span class="default-radio-text">Normal (Regular typing)</span>
+                </label>
+                <label class="default-radio-label">
+                    <input type="radio" name="default-mode" value="typewell" id="default-typewell">
+                    <span class="default-radio-text">TypeWell Mode (Strict typing)</span>
+                </label>
+            </div>
+        </div>
     </div>
 
     <div id="custom-container">
@@ -147,6 +167,57 @@
         </div>
     </div>
 
+    <!-- Word Practiceモード選択 -->
+    <div id="word-practice-container">
+        <div class="word-practice-mode-selection">
+            <label class="word-practice-mode-label">Word Set:</label>
+            <div class="word-practice-sets">
+                <label class="word-practice-radio-label">
+                    <input type="radio" name="word-practice-set" value="top500" id="word-practice-top500" checked>
+                    <span class="word-practice-radio-text">Top 500 Words</span>
+                </label>
+                <label class="word-practice-radio-label">
+                    <input type="radio" name="word-practice-set" value="top1500" id="word-practice-top1500">
+                    <span class="word-practice-radio-text">Top 1500 Words</span>
+                </label>
+                <label class="word-practice-radio-label">
+                    <input type="radio" name="word-practice-set" value="all" id="word-practice-all">
+                    <span class="word-practice-radio-text">All Words (2809)</span>
+                </label>
+            </div>
+            <div class="word-practice-count-section">
+                <label class="word-practice-count-label">Words:</label>
+                <select id="word-practice-count" class="word-practice-count-select">
+                    <option value="5">5</option>
+                    <option value="10" selected>10</option>
+                    <option value="15">15</option>
+                    <option value="20">20</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- TypeWell English Wordsモード選択 -->
+    <div id="typewell-english-words-container">
+        <div class="typewell-english-words-mode-selection">
+            <label class="typewell-english-words-mode-label">Word Set:</label>
+            <div class="typewell-english-words-sets">
+                <label class="typewell-english-words-radio-label">
+                    <input type="radio" name="typewell-english-words-set" value="top500" id="typewell-english-words-top500" checked>
+                    <span class="typewell-english-words-radio-text">Top 500 Words</span>
+                </label>
+                <label class="typewell-english-words-radio-label">
+                    <input type="radio" name="typewell-english-words-set" value="top1500" id="typewell-english-words-top1500">
+                    <span class="typewell-english-words-radio-text">Top 1500 Words</span>
+                </label>
+                <label class="typewell-english-words-radio-label">
+                    <input type="radio" name="typewell-english-words-set" value="all" id="typewell-english-words-all">
+                    <span class="typewell-english-words-radio-text">All Words (2809)</span>
+                </label>
+            </div>
+        </div>
+    </div>
+
     <div id="container">
         <div id="code-pane">
             <!-- タイプウェルスタート画面 -->
@@ -193,6 +264,51 @@
                 </div>
             </div>
 
+            <!-- Word Practiceスタート画面 -->
+            <div id="word-practice-start-screen" style="display: none;">
+                <div class="word-practice-start-content">
+                    <h2 class="word-practice-start-title">Word Practice</h2>
+                    <div class="word-practice-start-info">
+                        <p>Type words accurately • <span id="word-practice-count-display">10</span> words</p>
+                        <p class="word-practice-set-display">Set: <span id="word-practice-current-set">Top 500 Words</span></p>
+                        <p class="word-practice-license">Word list: <a href="https://www.newgeneralservicelist.org/" target="_blank" rel="noopener" style="text-decoration: underline;">NGSL</a> by Browne, Culligan & Phillips • <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener" style="text-decoration: underline;">CC BY-SA 4.0</a></p>
+                    </div>
+                    <div class="word-practice-start-instruction">
+                        <div class="word-practice-start-key">
+                            <button id="word-practice-start-button" class="start-key">Start</button>
+                        </div>
+                        <p>Click Start to begin</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Word Practice練習画面 -->
+            <div id="word-practice-practice-screen" style="display: none;">
+                <div class="word-practice-practice-content">
+                    <div id="word-practice-status" class="word-practice-status"></div>
+                    <div id="word-practice-word" class="word-practice-word"></div>
+                    <div id="word-practice-progress" class="word-practice-progress"></div>
+                </div>
+            </div>
+
+            <!-- TypeWell English Wordsスタート画面 -->
+            <div id="typewell-english-words-start-screen" style="display: none;">
+                <div class="typewell-english-words-start-content">
+                    <h2 class="typewell-english-words-start-title">TypeWell English Words</h2>
+                    <div class="typewell-english-words-start-info">
+                        <p>400 characters • 8 lines • English vocabulary practice</p>
+                        <p class="typewell-english-words-set-display">Set: <span id="typewell-english-words-current-set">Top 500 Words</span></p>
+                        <p class="typewell-english-words-license">Word list: <a href="https://www.newgeneralservicelist.org/" target="_blank" rel="noopener" style="text-decoration: underline;">NGSL</a> by Browne, Culligan & Phillips • <a href="https://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener" style="text-decoration: underline;">CC BY-SA 4.0</a></p>
+                    </div>
+                    <div class="typewell-english-words-start-instruction">
+                        <div class="typewell-english-words-start-key">
+                            <button id="typewell-english-words-start-button" class="start-key">Enter</button>
+                        </div>
+                        <p>Press Enter or Space to start</p>
+                    </div>
+                </div>
+            </div>
+
             <!-- タイプウェルカウントダウン -->
             <div id="typewell-countdown" style="display: none;">
                 <div class="typewell-countdown-content">
@@ -223,6 +339,48 @@
                         <!-- サマリー統計がここに表示される -->
                     </div>
                     <div id="initial-speed-detailed-results" class="initial-speed-detailed-results">
+                        <!-- 詳細結果がここに表示される -->
+                    </div>
+                </div>
+
+                <!-- TypeWell専用リザルト -->
+                <div id="typewell-results" class="typewell-results-section" style="display: none;">
+                    <div class="typewell-results-header">
+                        <span id="typewell-mode-info">Lowercase</span> •
+                        <span id="typewell-lines-info">10 lines</span>
+                    </div>
+                    
+                    <!-- TypeWell用統計表示 -->
+                    <div class="stats-list typewell-stats">
+                        <div class="stat-item">
+                            <span class="stat-label">Time</span>
+                            <span class="stat-value" id="typewell-time-display">0s</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">WPM</span>
+                            <span class="stat-value" id="typewell-wpm-display">0</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-label">Accuracy</span>
+                            <span class="stat-value accuracy-value" id="typewell-accuracy-display">100%</span>
+                        </div>
+                    </div>
+                    
+                    <div id="typewell-detailed-results" class="typewell-detailed-results">
+                        <!-- 詳細結果がここに表示される -->
+                    </div>
+                </div>
+
+                <!-- Word Practice専用リザルト -->
+                <div id="word-practice-results" class="word-practice-results-section" style="display: none;">
+                    <div class="word-practice-results-header">
+                        <span id="word-practice-mode-info">Top 500 Words</span> •
+                        <span id="word-practice-count-info">10 words</span>
+                    </div>
+                    <div id="word-practice-summary" class="word-practice-summary">
+                        <!-- サマリー統計がここに表示される -->
+                    </div>
+                    <div id="word-practice-detailed-results" class="word-practice-detailed-results">
                         <!-- 詳細結果がここに表示される -->
                     </div>
                 </div>
@@ -526,19 +684,130 @@
     <!-- 統計パネル -->
     <div id="stats-panel">
         <div id="stats-content">
-            <h3>📊 Statistics</h3>
+            <!-- ヘッダー -->
+            <div class="stats-header">
+                <h3 class="stats-title">📊 Statistics</h3>
+            </div>
 
-            <!-- 苦手文字統計 -->
-            <div id="mistake-stats" class="mistake-stats-section">
-                <h4>🎯 Frequent Mistakes (Overall)</h4>
-                <div id="mistake-chart" class="mistake-chart">
-                    <!-- 苦手文字チャートがここに表示される -->
+            <!-- メインエリア：左右分割 -->
+            <div class="stats-body">
+                <!-- 左側：既存の詳細統計 -->
+                <div class="stats-left">
+                    <!-- 苦手文字統計 -->
+                    <div id="mistake-stats" class="mistake-stats-section">
+                        <h4>🎯 Frequent Mistakes (Overall)</h4>
+                        <div id="mistake-chart" class="mistake-chart">
+                            <!-- 苦手文字チャートがここに表示される -->
+                        </div>
+                    </div>
+
+                    <div id="stats-list">
+                        <!-- 統計データがここに動的に表示される -->
+                    </div>
+                </div>
+
+                <!-- 右側：新しいグラフエリア -->
+                <div class="stats-right">
+                    <!-- サマリー統計 -->
+                    <div class="graph-summary">
+                        <div class="summary-card">
+                            <div class="summary-value" id="total-sessions">0</div>
+                            <div class="summary-label">Total Sessions</div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-value" id="avg-wpm">0</div>
+                            <div class="summary-label">Average WPM</div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-value" id="best-wpm">0</div>
+                            <div class="summary-label">Best WPM</div>
+                        </div>
+                        <div class="summary-card">
+                            <div class="summary-value" id="improvement">+0</div>
+                            <div class="summary-label">WPM Improvement</div>
+                        </div>
+                    </div>
+
+                    <!-- グラフコントロール -->
+                    <div class="graph-controls">
+                        <div class="control-group">
+                            <label class="control-label">Language:</label>
+                            <select class="control-select" id="graph-language-filter">
+                                <!-- 動的生成 -->
+                            </select>
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label">Period:</label>
+                            <select class="control-select" id="graph-period-filter">
+                                <option value="all">All Time</option>
+                                <option value="7">Last 7 Days</option>
+                                <option value="30">Last 30 Days</option>
+                                <option value="90">Last 3 Months</option>
+                            </select>
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label">Metric:</label>
+                            <select class="control-select" id="graph-metric-filter">
+                                <option value="latest">Latest</option>
+                                <option value="best">Best</option>
+                                <option value="average">Average</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- グラフタブ -->
+                    <div class="graph-tabs">
+                        <button class="graph-tab active" data-tab="progress">📈 Progress</button>
+                        <button class="graph-tab" data-tab="compare">📊 Compare</button>
+                        <button class="graph-tab" data-tab="speed">⚡ Speed</button>
+                        <button class="graph-tab" data-tab="keys">⌨️ Keys</button>
+                    </div>
+
+                    <!-- グラフコンテナ -->
+                    <div class="graph-container">
+                        <!-- パフォーマンス推移グラフ -->
+                        <div class="graph-content active" id="progress-graph">
+                            <div class="canvas-container">
+                                <canvas id="progress-chart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- 言語別比較グラフ -->
+                        <div class="graph-content" id="compare-graph">
+                            <div class="canvas-container">
+                                <canvas id="compare-chart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Initial Speed分析 -->
+                        <div class="graph-content" id="speed-graph">
+                            <div class="canvas-container">
+                                <canvas id="speed-chart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- キーボード分析 -->
+                        <div class="graph-content" id="keys-graph">
+                            <div class="keyboard-heatmap" id="keyboard-heatmap">
+                                <!-- キーボードがここに生成される -->
+                            </div>
+                            <div class="canvas-container" style="height: 150px;">
+                                <canvas id="keys-chart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 詳細ミス分析 -->
+                    <div class="mistake-analysis">
+                        <h4 class="mistake-title">🎯 Detailed Mistake Analysis</h4>
+                        <div class="canvas-container" style="height: 200px;">
+                            <canvas id="mistake-analysis-chart"></canvas>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div id="stats-list">
-                <!-- 統計データがここに動的に表示される -->
-            </div>
+            <!-- フッター -->
             <div class="stats-actions">
                 <button id="clear-stats">Clear All</button>
                 <button id="close-stats">Close</button>
@@ -579,7 +848,7 @@
 
     <!-- フッター -->
     <div class="footer-simple">
-        <a href="https://github.com/typingpra/typingpra.github.io" target="_blank" rel="noopener noreferrer">
+        <a href="https://www.google.com" target="_blank" rel="noopener noreferrer">
             <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
                 <path
                     d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z" />
@@ -590,6 +859,7 @@
 
     <!-- JavaScriptファイルの読み込み（順序重要） -->
     <script src="static/js/snippets.js"></script>
+    <script src="static/js/words.js"></script>
     <script src="static/js/constants.js"></script>
     <script src="static/js/storage.js"></script>
     <script src="static/js/utils.js"></script>

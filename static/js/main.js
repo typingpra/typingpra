@@ -20,6 +20,18 @@ function setupEventListeners() {
 		CustomCode.handleFileSelect(e),
 	);
 
+	// デフォルト言語モード選択関連
+	if (DOM.defaultNormalRadio) {
+		DOM.defaultNormalRadio.addEventListener("change", () =>
+			UI.handleDefaultModeChange(),
+		);
+	}
+	if (DOM.defaultTypewellRadio) {
+		DOM.defaultTypewellRadio.addEventListener("change", () =>
+			UI.handleDefaultModeChange(),
+		);
+	}
+
 	// カスタムモード選択関連
 	if (DOM.customNormalRadio) {
 		DOM.customNormalRadio.addEventListener("change", () =>
@@ -84,6 +96,61 @@ function setupEventListeners() {
 	if (DOM.initialSpeedStartButton) {
 		DOM.initialSpeedStartButton.addEventListener("click", () =>
 			Typing.startInitialSpeedFromClick(),
+		);
+	}
+
+	// Word Practiceモード選択関連
+	if (DOM.wordPracticeTop500Radio) {
+		DOM.wordPracticeTop500Radio.addEventListener("change", () =>
+			UI.handleWordPracticeSetChange(),
+		);
+	}
+	if (DOM.wordPracticeTop1500Radio) {
+		DOM.wordPracticeTop1500Radio.addEventListener("change", () =>
+			UI.handleWordPracticeSetChange(),
+		);
+	}
+	if (DOM.wordPracticeAllRadio) {
+		DOM.wordPracticeAllRadio.addEventListener("change", () =>
+			UI.handleWordPracticeSetChange(),
+		);
+	}
+
+	// Word Practice単語数選択関連
+	if (DOM.wordPracticeCountSelect) {
+		DOM.wordPracticeCountSelect.addEventListener("change", () =>
+			UI.handleWordPracticeCountChange(),
+		);
+	}
+
+	// Word Practice開始ボタンのクリックイベント
+	if (DOM.wordPracticeStartButton) {
+		DOM.wordPracticeStartButton.addEventListener("click", () =>
+			Typing.startWordPracticeFromClick(),
+		);
+	}
+
+	// TypeWell English Words単語セット選択関連
+	if (DOM.typewellEnglishWordsTop500Radio) {
+		DOM.typewellEnglishWordsTop500Radio.addEventListener("change", () =>
+			UI.handleTypeWellEnglishWordsSetChange(),
+		);
+	}
+	if (DOM.typewellEnglishWordsTop1500Radio) {
+		DOM.typewellEnglishWordsTop1500Radio.addEventListener("change", () =>
+			UI.handleTypeWellEnglishWordsSetChange(),
+		);
+	}
+	if (DOM.typewellEnglishWordsAllRadio) {
+		DOM.typewellEnglishWordsAllRadio.addEventListener("change", () =>
+			UI.handleTypeWellEnglishWordsSetChange(),
+		);
+	}
+
+	// TypeWell English Words開始ボタンのクリックイベント
+	if (DOM.typewellEnglishWordsStartButton) {
+		DOM.typewellEnglishWordsStartButton.addEventListener("click", () =>
+			Typing.startTypeWellFromClick(),
 		);
 	}
 
@@ -248,6 +315,20 @@ function setupEventListeners() {
 		// Escキー: 完全リセット
 		if (e.key === "Escape") {
 			e.preventDefault();
+			// Word Practice練習中の場合は画面をクリア
+			if (DOM.langSel.value === "word-practice" && APP_STATE.wordPracticeState === "practicing") {
+				APP_STATE.wordPracticeState = "waiting";
+				// 単語表示をクリア
+				if (DOM.wordPracticeWord) {
+					DOM.wordPracticeWord.textContent = "";
+				}
+				// 進捗表示をクリア
+				if (DOM.wordPracticeProgress) {
+					DOM.wordPracticeProgress.textContent = "";
+				}
+				// inputBufferをクリア
+				APP_STATE.inputBuffer = "";
+			}
 			Typing.restartAll();
 			return;
 		}
@@ -315,8 +396,8 @@ function setupEventListeners() {
 			return;
 		}
 
-		// タイプウェルオリジナルモードの特別処理
-		if (DOM.langSel.value === "typewell") {
+		// タイプウェルオリジナルモードまたはTypeWell English Wordsモードの特別処理
+		if (DOM.langSel.value === "typewell" || DOM.langSel.value === "typewell-english-words") {
 			// 待機中またはカウントダウン中の場合はTyping.handleKeyPressに委譲
 			if (
 				APP_STATE.typewellState === "waiting" ||
@@ -332,11 +413,34 @@ function setupEventListeners() {
 			// タイピング中の場合は通常処理を続行
 		}
 
+		// Word Practiceモードの特別処理
+		if (DOM.langSel.value === "word-practice") {
+			// 待機中の場合はスタート処理
+			if (APP_STATE.wordPracticeState === "waiting") {
+				if (e.key === "Enter" || e.key === " ") {
+					e.preventDefault();
+					Typing.startWordPracticeFromClick();
+				}
+				return;
+			}
+			// 練習中の場合はWord Practice専用処理（TypeWellモード同様、バックスペース無効）
+			if (APP_STATE.wordPracticeState === "practicing") {
+				if (e.key.length === 1 || e.key === " ") {
+					e.preventDefault();
+					Typing.handleWordPracticeInput(e.key);
+				}
+				// バックスペースは無効化（TypeWellモード同様）
+				return;
+			}
+			// その他の状態では入力を無視
+			return;
+		}
+
 		// タイマーが開始されていない場合は開始（Initial Speedまたはタイプウェルのタイピング状態の場合のみ）
 		if (
 			!APP_STATE.startTime &&
 			!Typing.isInitialSpeedMode() &&
-			(DOM.langSel.value !== "typewell" || APP_STATE.typewellState === "typing")
+			((DOM.langSel.value !== "typewell" && DOM.langSel.value !== "typewell-english-words") || APP_STATE.typewellState === "typing")
 		) {
 			Typing.startTimer();
 		}
@@ -349,6 +453,100 @@ function setupEventListeners() {
 			Typing.handleBackspace();
 		}
 	});
+}
+
+// ラジオボタンの初期状態を設定
+function initializeRadioButtons() {
+	// TypeWellモードのラジオボタン初期化
+	if (DOM.langSel.value === "typewell") {
+		// 現在選択されているTypeWellモードを取得
+		const currentMode = Utils.getSelectedTypeWellMode();
+		// 強制的に最初のオプションをチェックしてからユーザーの選択に戻す
+		if (DOM.typewellLowercaseRadio) {
+			DOM.typewellLowercaseRadio.checked = true;
+			// その後、実際の選択に戻す
+			setTimeout(() => {
+				switch (currentMode) {
+					case "lowercase":
+						DOM.typewellLowercaseRadio.checked = true;
+						break;
+					case "mixed":
+						if (DOM.typewellMixedRadio) DOM.typewellMixedRadio.checked = true;
+						break;
+					case "symbols":
+						if (DOM.typewellSymbolsRadio) DOM.typewellSymbolsRadio.checked = true;
+						break;
+					case "numbers":
+						if (DOM.typewellNumbersRadio) DOM.typewellNumbersRadio.checked = true;
+						break;
+				}
+				UI.handleTypeWellModeChange();
+			}, 0);
+		}
+	}
+
+	// TypeWell English Wordsモードのラジオボタン初期化
+	if (DOM.langSel.value === "typewell-english-words") {
+		const currentSet = Utils.getSelectedTypeWellEnglishWordsSet();
+		// 強制的に最初のオプションをチェックしてからユーザーの選択に戻す
+		if (DOM.typewellEnglishWordsTop500Radio) {
+			DOM.typewellEnglishWordsTop500Radio.checked = true;
+			// その後、実際の選択に戻す
+			setTimeout(() => {
+				switch (currentSet) {
+					case "top500":
+						DOM.typewellEnglishWordsTop500Radio.checked = true;
+						break;
+					case "top1500":
+						if (DOM.typewellEnglishWordsTop1500Radio) DOM.typewellEnglishWordsTop1500Radio.checked = true;
+						break;
+					case "all":
+						if (DOM.typewellEnglishWordsAllRadio) DOM.typewellEnglishWordsAllRadio.checked = true;
+						break;
+				}
+				UI.handleTypeWellEnglishWordsSetChange();
+			}, 0);
+		}
+	}
+
+	// Initial Speedモードのラジオボタン初期化
+	if (DOM.langSel.value === "initial-speed") {
+		const currentMode = Utils.getSelectedInitialSpeedMode();
+		// 強制的に最初のオプションをチェックしてからユーザーの選択に戻す
+		if (DOM.initialSpeedLowercaseRadio) {
+			DOM.initialSpeedLowercaseRadio.checked = true;
+			// その後、実際の選択に戻す
+			setTimeout(() => {
+				switch (currentMode) {
+					case "lowercase":
+						DOM.initialSpeedLowercaseRadio.checked = true;
+						break;
+					case "numbers":
+						if (DOM.initialSpeedNumbersRadio) DOM.initialSpeedNumbersRadio.checked = true;
+						break;
+				}
+				UI.handleInitialSpeedModeChange();
+			}, 0);
+		}
+	}
+
+	// デフォルト言語モードのラジオボタン初期化
+	const currentDefaultMode = Utils.getSelectedDefaultMode();
+	if (DOM.defaultNormalRadio) {
+		DOM.defaultNormalRadio.checked = true;
+		// その後、実際の選択に戻す
+		setTimeout(() => {
+			switch (currentDefaultMode) {
+				case "normal":
+					DOM.defaultNormalRadio.checked = true;
+					break;
+				case "typewell":
+					if (DOM.defaultTypewellRadio) DOM.defaultTypewellRadio.checked = true;
+					break;
+			}
+			UI.handleDefaultModeChange();
+		}, 0);
+	}
 }
 
 // アプリケーションの初期化
@@ -371,6 +569,12 @@ function initializeApp() {
 
 	// イベントリスナーの設定
 	setupEventListeners();
+
+	// 初期状態のUI表示設定
+	UI.performLanguageChange();
+
+	// ラジオボタンの初期状態を明示的に設定
+	initializeRadioButtons();
 
 	console.log("App initialized. Current language:", DOM.langSel.value);
 	console.log("Current code length:", Utils.getCurrentCode().length);

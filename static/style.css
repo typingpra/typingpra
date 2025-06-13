@@ -273,6 +273,52 @@ header button {
 	background: var(--border-color);
 }
 
+/* デフォルト言語モード選択のスタイル */
+.default-mode-selection {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.default-mode-label {
+	font-weight: bold;
+	color: var(--text-color);
+	font-family: "Courier New", monospace;
+	font-size: 14px;
+}
+
+.default-modes {
+	display: flex;
+	flex-direction: column;
+	gap: 6px;
+}
+
+.default-radio-label {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	color: var(--text-color);
+	font-family: "Courier New", monospace;
+	font-size: 12px;
+	cursor: pointer;
+	transition: color 0.2s ease;
+}
+
+.default-radio-label:hover {
+	color: var(--progress-color);
+}
+
+.default-radio-label input[type="radio"] {
+	width: 16px;
+	height: 16px;
+	accent-color: var(--progress-color);
+	cursor: pointer;
+}
+
+.default-radio-text {
+	user-select: none;
+}
+
 /* カスタムコードモード選択のスタイル */
 .custom-mode-selection {
 	display: flex;
@@ -456,6 +502,19 @@ header button {
 	padding: 10px 20px;
 }
 
+/* Starting...メッセージ専用スタイル */
+.initial-speed-status.starting-message {
+	top: 120px;
+	color: var(--pending-color);
+}
+
+/* 反応時間表示専用スタイル */
+.initial-speed-status.reaction-time {
+	top: 120px;
+	color: var(--correct-color);
+	transform: translateX(-10px);
+}
+
 .initial-speed-character {
 	font-size: 90px;
 	font-weight: 600;
@@ -483,6 +542,498 @@ header button {
 	margin-top: 30px;
 	min-height: 40px;
 	white-space: pre-line;
+}
+
+/* Word Practiceコンテナ（Initial Speed構造を踏襲） */
+#word-practice-container {
+	display: none;
+	padding: 10px 20px;
+	background: var(--panel-bg);
+	transition: background-color 0.3s;
+	border: none;
+	border-bottom: none;
+}
+
+.word-practice-mode-selection {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.word-practice-mode-label {
+	font-weight: bold;
+	color: var(--text-color);
+	font-family: "Courier New", monospace;
+	font-size: 14px;
+}
+
+.word-practice-sets {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.word-practice-radio-label {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	color: var(--text-color);
+	font-family: "Courier New", monospace;
+	font-size: 12px;
+	cursor: pointer;
+	transition: color 0.2s ease;
+}
+
+.word-practice-radio-label:hover {
+	color: var(--progress-color);
+}
+
+.word-practice-radio-label input[type="radio"] {
+	width: 16px;
+	height: 16px;
+	accent-color: var(--progress-color);
+	cursor: pointer;
+}
+
+.word-practice-radio-text {
+	user-select: none;
+}
+
+.word-practice-count-section {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	margin-top: 10px;
+}
+
+.word-practice-count-label {
+	font-weight: bold;
+	color: var(--text-color);
+	font-family: "Courier New", monospace;
+	font-size: 14px;
+}
+
+.word-practice-count-select {
+	background: var(--button-bg);
+	color: var(--text-color);
+	border: 1px solid var(--border-color);
+	padding: 4px 8px;
+	border-radius: 4px;
+	font-family: "Courier New", monospace;
+	font-size: 12px;
+	cursor: pointer;
+	transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+}
+
+.word-practice-count-select:hover {
+	background: var(--border-color);
+}
+
+/* Word Practiceスタート画面（Initial Speed位置・構造を完全踏襲） */
+#word-practice-start-screen {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	display: flex;
+	align-items: flex-start;
+	justify-content: center;
+	background: var(--bg-color);
+	z-index: 10;
+	padding: 100px 0 0 0;
+	transform: translateX(-15%);
+}
+
+.word-practice-start-content {
+	text-align: center;
+	padding: 30px;
+	border: 1px solid var(--border-color);
+	border-radius: 8px;
+	background: var(--panel-bg);
+	min-width: 300px;
+	max-width: 400px;
+}
+
+.word-practice-start-title {
+	font-size: 24px;
+	font-weight: bold;
+	color: var(--progress-color);
+	margin: 0 0 15px 0;
+	font-family: "Courier New", monospace;
+}
+
+.word-practice-start-info {
+	margin-bottom: 25px;
+	color: var(--text-color);
+	font-family: "Courier New", monospace;
+}
+
+.word-practice-start-info p {
+	margin: 6px 0;
+	font-size: 13px;
+}
+
+.word-practice-set-display {
+	font-weight: bold;
+	color: var(--progress-color);
+}
+
+.word-practice-license {
+	font-size: 11px;
+	color: var(--pending-color);
+	opacity: 0.8;
+	margin: 6px 0;
+	font-family: "Courier New", monospace;
+}
+
+.word-practice-license a {
+	color: var(--pending-color);
+	text-decoration: none;
+}
+
+.word-practice-license a:hover {
+	color: var(--text-color);
+	text-decoration: underline;
+}
+
+.word-practice-start-instruction {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 12px;
+}
+
+.word-practice-start-key {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+/* Word Practice練習画面（Initial Speed位置・構造を完全踏襲） */
+#word-practice-practice-screen {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	display: flex;
+	align-items: flex-start;
+	justify-content: center;
+	background: var(--bg-color);
+	z-index: 10;
+	padding: 100px 0 0 0;
+	transform: translateX(-15%);
+}
+
+.word-practice-practice-content {
+	text-align: center;
+	padding: 30px;
+	min-width: 300px;
+	max-width: 400px;
+	position: relative;
+}
+
+.word-practice-status {
+	position: absolute;
+	top: 120px;
+	left: 0;
+	right: 0;
+	font-size: 20px;
+	color: var(--pending-color);
+	font-family: "Courier New", monospace;
+	min-height: 40px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-weight: bold;
+	padding: 10px 20px;
+}
+
+/* Starting...メッセージ専用スタイル */
+.word-practice-status.starting-message {
+	top: 120px;
+	color: var(--pending-color);
+}
+
+/* 完了時間表示専用スタイル */
+.word-practice-status.completion-time {
+	top: 120px;
+	color: var(--correct-color);
+	transform: translateX(-10px);
+}
+
+.word-practice-word {
+	font-size: 90px;
+	font-weight: 600;
+	color: var(--text-color);
+	font-family: "Consolas", "Monaco", "Lucida Console", "Liberation Mono", "DejaVu Sans Mono", "Bitstream Vera Sans Mono", "Courier New", monospace;
+	margin: 60px auto 40px auto;
+	min-height: 100px;
+	width: 800px;
+	display: flex;
+	align-items: center;
+	justify-content: flex-start;
+	padding-left: 120px;
+	transition: color 0.2s ease;
+}
+
+.word-practice-word.incorrect {
+	color: var(--incorrect-color);
+	background: var(--incorrect-bg);
+	border-radius: 4px;
+	padding: 5px 10px;
+}
+
+.word-practice-progress {
+	font-size: 16px;
+	color: var(--pending-color);
+	font-family: "Courier New", monospace;
+	margin-top: 30px;
+	min-height: 40px;
+	white-space: pre-line;
+}
+
+/* Word Practice結果画面（Initial Speed結果画面構造を踏襲） */
+.word-practice-results-section {
+	margin-bottom: 30px;
+}
+
+.word-practice-results-header {
+	font-size: 14px;
+	color: var(--pending-color);
+	margin-bottom: 20px;
+	padding-bottom: 15px;
+	border-bottom: 1px solid var(--border-color);
+}
+
+.word-practice-summary {
+	margin-bottom: 25px;
+}
+
+.word-practice-summary-grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 15px;
+}
+
+.word-practice-detailed-results {
+	max-height: 200px;
+	overflow-y: auto;
+	border: 1px solid var(--border-color);
+	border-radius: 4px;
+}
+
+.word-practice-words-list {
+	padding: 10px;
+}
+
+.word-result {
+	display: grid;
+	grid-template-columns: 80px 80px 80px 80px 1fr;
+	gap: 8px;
+	align-items: center;
+	padding: 6px 8px;
+	font-family: "Courier New", monospace;
+	font-size: 12px;
+	border-bottom: 1px solid var(--border-color);
+}
+
+.word-result:last-child {
+	border-bottom: none;
+}
+
+.word-result.incorrect {
+	background: var(--incorrect-bg);
+}
+
+.word-result.header {
+	background: var(--panel-bg);
+	font-weight: bold;
+	border-bottom: 2px solid var(--border-color);
+	color: var(--pending-color);
+}
+
+.word-number {
+	color: var(--pending-color);
+}
+
+.word-text {
+	font-weight: bold;
+	text-align: center;
+}
+
+.word-first-key {
+	font-weight: bold;
+	color: var(--text-color);
+}
+
+.word-time {
+	font-weight: bold;
+	color: var(--text-color);
+}
+
+.word-wpm {
+	font-weight: bold;
+	color: var(--text-color);
+}
+
+/* TypeWell English Wordsコンテナ（Word Practice構造を踏襲） */
+#typewell-english-words-container {
+	display: none;
+	padding: 10px 20px;
+	background: var(--panel-bg);
+	transition: background-color 0.3s;
+	border: none;
+	border-bottom: none;
+}
+
+.typewell-english-words-mode-selection {
+	display: flex;
+	flex-direction: column;
+	gap: 10px;
+}
+
+.typewell-english-words-mode-label {
+	font-weight: bold;
+	color: var(--text-color);
+	font-family: "Courier New", monospace;
+	font-size: 14px;
+}
+
+.typewell-english-words-sets {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.typewell-english-words-radio-label {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	color: var(--text-color);
+	font-family: "Courier New", monospace;
+	font-size: 12px;
+	cursor: pointer;
+	transition: color 0.2s ease;
+}
+
+.typewell-english-words-radio-label:hover {
+	color: var(--progress-color);
+}
+
+.typewell-english-words-radio-label input[type="radio"] {
+	width: 16px;
+	height: 16px;
+	accent-color: var(--progress-color);
+	cursor: pointer;
+}
+
+.typewell-english-words-radio-text {
+	user-select: none;
+}
+
+/* TypeWell English Wordsスタート画面（Word Practice位置・構造を完全踏襲） */
+#typewell-english-words-start-screen {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	display: flex;
+	align-items: flex-start;
+	justify-content: center;
+	background: var(--bg-color);
+	z-index: 10;
+	padding: 100px 0 0 0;
+	transform: translateX(-15%);
+}
+
+.typewell-english-words-start-content {
+	text-align: center;
+	padding: 30px;
+	border: 1px solid var(--border-color);
+	border-radius: 8px;
+	background: var(--panel-bg);
+	min-width: 300px;
+	max-width: 400px;
+}
+
+.typewell-english-words-start-title {
+	font-size: 24px;
+	font-weight: bold;
+	color: var(--progress-color);
+	margin: 0 0 15px 0;
+	font-family: "Courier New", monospace;
+}
+
+.typewell-english-words-start-info {
+	margin-bottom: 25px;
+	color: var(--text-color);
+	font-family: "Courier New", monospace;
+}
+
+.typewell-english-words-start-info p {
+	margin: 6px 0;
+	font-size: 13px;
+}
+
+.typewell-english-words-set-display {
+	font-weight: bold;
+	color: var(--progress-color);
+}
+
+.typewell-english-words-license {
+	font-size: 11px;
+	color: var(--pending-color);
+	opacity: 0.8;
+	margin: 6px 0;
+	font-family: "Courier New", monospace;
+}
+
+.typewell-english-words-license a {
+	color: var(--pending-color);
+	text-decoration: none;
+}
+
+.typewell-english-words-license a:hover {
+	color: var(--text-color);
+	text-decoration: underline;
+}
+
+.typewell-english-words-start-instruction {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 12px;
+}
+
+.typewell-english-words-start-key {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+/* Word Practiceモード専用スタイル */
+body.word-practice-mode #stats {
+	display: none; /* Word Practiceモードでは統計表示を隠す */
+}
+
+body.word-practice-mode #progress-bar {
+	display: none; /* Word Practiceモードではプログレスバーを隠す */
+}
+
+/* Word Practiceモードでは背景のコード表示エリアを完全に非表示 */
+body.word-practice-mode #code {
+	display: none !important; /* コード表示エリアを隠す */
+}
+
+body.word-practice-mode #container {
+	background: transparent; /* コンテナ背景を透明に */
+}
+
+body.word-practice-mode #code-pane {
+	background: transparent; /* コードペインの背景を透明に */
 }
 
 /* タイプウェルスタート画面のスタイル - 中央よりやや左上に配置 */
@@ -859,7 +1410,20 @@ body.initial-speed-mode #code-pane {
 	margin-bottom: 30px;
 }
 
+/* TypeWell専用リザルトセクション */
+.typewell-results-section {
+	margin-bottom: 30px;
+}
+
 .initial-speed-results-header {
+	font-size: 14px;
+	color: var(--pending-color);
+	margin-bottom: 20px;
+	padding-bottom: 15px;
+	border-bottom: 1px solid var(--border-color);
+}
+
+.typewell-results-header {
 	font-size: 14px;
 	color: var(--pending-color);
 	margin-bottom: 20px;
@@ -908,7 +1472,22 @@ body.initial-speed-mode #code-pane {
 	border-radius: 4px;
 }
 
+.typewell-detailed-results {
+	max-height: 200px;
+	overflow-y: auto;
+	border: 1px solid var(--border-color);
+	border-radius: 4px;
+}
+
+.typewell-stats {
+	margin-bottom: 20px;
+}
+
 .initial-speed-trials-list {
+	padding: 10px;
+}
+
+.typewell-lines-list {
 	padding: 10px;
 }
 
@@ -931,7 +1510,26 @@ body.initial-speed-mode #code-pane {
 	background: var(--incorrect-bg);
 }
 
+.line-result {
+	display: grid;
+	grid-template-columns: 60px 100px 1fr;
+	gap: 8px;
+	align-items: center;
+	padding: 6px 8px;
+	font-family: "Courier New", monospace;
+	font-size: 12px;
+	border-bottom: 1px solid var(--border-color);
+}
+
+.line-result:last-child {
+	border-bottom: none;
+}
+
 .trial-number {
+	color: var(--pending-color);
+}
+
+.line-number {
 	color: var(--pending-color);
 }
 
@@ -946,6 +1544,11 @@ body.initial-speed-mode #code-pane {
 }
 
 .trial-time {
+	font-weight: bold;
+	color: var(--text-color);
+}
+
+.line-time {
 	font-weight: bold;
 	color: var(--text-color);
 }
@@ -1486,15 +2089,243 @@ body.initial-speed-mode #code-pane {
 #stats-content {
 	background: var(--bg-color);
 	color: var(--text-color);
-	padding: 30px;
 	border-radius: 8px;
 	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-	min-width: 500px;
-	max-width: 600px;
-	max-height: 80vh;
 	border: 1px solid var(--border-color);
 	transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+	width: 95vw;
+	height: 90vh;
+	max-width: 1400px;
+	display: flex;
+	flex-direction: column;
+	overflow: hidden;
+}
+
+/* 統計パネル左右分割レイアウト */
+.stats-header {
+	display: flex;
+	justify-content: flex-start;
+	align-items: flex-start;
+	padding: 8px 15px;
+	height: 30px;
+	min-height: 30px;
+	border-bottom: 1px solid var(--border-color);
+	background: var(--panel-bg);
+}
+
+.stats-title {
+	font-size: 24px;
+	font-weight: normal;
+	color: var(--text-color);
+	margin: 0;
+	font-family: "Courier New", monospace;
+	line-height: 1;
+	transform: translateY(4px);
+}
+
+.stats-body {
+	display: flex;
+	flex: 1;
+	overflow: hidden;
+}
+
+.stats-left {
+	flex: 1;
+	padding: 20px;
 	overflow-y: auto;
+	border-right: 1px solid var(--border-color);
+	background: var(--bg-color);
+}
+
+.stats-right {
+	flex: 1.2;
+	padding: 20px;
+	overflow-y: auto;
+	background: var(--panel-bg);
+}
+
+/* 新しいグラフエリアのスタイル */
+.graph-summary {
+	display: grid;
+	grid-template-columns: repeat(2, 1fr);
+	gap: 15px;
+	margin-bottom: 25px;
+}
+
+.summary-card {
+	background: var(--bg-color);
+	border: 1px solid var(--border-color);
+	border-radius: 6px;
+	padding: 15px;
+	text-align: center;
+}
+
+.summary-value {
+	font-size: 20px;
+	font-weight: bold;
+	color: var(--progress-color);
+	margin-bottom: 5px;
+	font-family: "Courier New", monospace;
+}
+
+.summary-label {
+	font-size: 11px;
+	color: var(--pending-color);
+	font-family: "Courier New", monospace;
+}
+
+.graph-controls {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 15px;
+	align-items: center;
+	margin-bottom: 15px;
+	padding: 12px;
+	background: var(--bg-color);
+	border: 1px solid var(--border-color);
+	border-radius: 6px;
+}
+
+.control-group {
+	display: flex;
+	flex-direction: column;
+	gap: 4px;
+}
+
+.control-label {
+	font-size: 11px;
+	color: var(--pending-color);
+	font-weight: bold;
+	font-family: "Courier New", monospace;
+}
+
+.control-select {
+	background: var(--button-bg);
+	color: var(--text-color);
+	border: 1px solid var(--border-color);
+	padding: 4px 8px;
+	border-radius: 4px;
+	font-family: "Courier New", monospace;
+	font-size: 11px;
+	min-width: 100px;
+	cursor: pointer;
+	transition: background-color 0.3s, color 0.3s, border-color 0.3s;
+}
+
+.control-select:hover {
+	background: var(--border-color);
+}
+
+.graph-tabs {
+	display: flex;
+	margin-bottom: 15px;
+	border-bottom: 1px solid var(--border-color);
+}
+
+.graph-tab {
+	background: none;
+	border: none;
+	color: var(--pending-color);
+	padding: 8px 15px;
+	cursor: pointer;
+	font-family: "Courier New", monospace;
+	font-size: 12px;
+	border-bottom: 2px solid transparent;
+	transition: color 0.2s, border-color 0.2s;
+}
+
+.graph-tab.active {
+	color: var(--progress-color);
+	border-bottom-color: var(--progress-color);
+}
+
+.graph-tab:hover:not(.active) {
+	color: var(--text-color);
+}
+
+.graph-container {
+	background: var(--bg-color);
+	border: 1px solid var(--border-color);
+	border-radius: 6px;
+	padding: 15px;
+	height: 300px;
+	position: relative;
+	margin-bottom: 20px;
+}
+
+.graph-content {
+	display: none;
+	height: 100%;
+}
+
+.graph-content.active {
+	display: block;
+}
+
+.canvas-container {
+	height: 270px;
+	position: relative;
+}
+
+.keyboard-heatmap {
+	display: grid;
+	grid-template-columns: repeat(15, 1fr);
+	gap: 1px;
+	max-width: 450px;
+	margin: 10px 0;
+}
+
+.key {
+	aspect-ratio: 1;
+	border: 1px solid var(--border-color);
+	border-radius: 2px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 8px;
+	font-weight: bold;
+	color: var(--text-color);
+	transition: all 0.2s;
+	font-family: "Courier New", monospace;
+}
+
+.key.intensity-0 {
+	background: var(--panel-bg);
+}
+
+.key.intensity-1 {
+	background: rgba(244, 71, 71, 0.2);
+}
+
+.key.intensity-2 {
+	background: rgba(244, 71, 71, 0.4);
+}
+
+.key.intensity-3 {
+	background: rgba(244, 71, 71, 0.6);
+}
+
+.key.intensity-4 {
+	background: rgba(244, 71, 71, 0.8);
+}
+
+.key.intensity-5 {
+	background: var(--incorrect-color);
+	color: white;
+}
+
+.mistake-analysis {
+	background: var(--bg-color);
+	border: 1px solid var(--border-color);
+	border-radius: 6px;
+	padding: 15px;
+}
+
+.mistake-title {
+	font-size: 14px;
+	color: var(--progress-color);
+	margin: 0 0 15px 0;
+	font-family: "Courier New", monospace;
 }
 
 #stats-content h3 {
@@ -1664,7 +2495,9 @@ body.initial-speed-mode #code-pane {
 	display: flex;
 	gap: 12px;
 	justify-content: center;
-	margin-top: 20px;
+	padding: 5px 20px;
+	border-top: 1px solid var(--border-color);
+	background: var(--panel-bg);
 }
 
 .stats-actions button {
@@ -1949,6 +2782,93 @@ body.initial-speed-mode #code-pane {
 .delete-final-confirm-btn:hover {
 	background: #5a161c;
 	transform: translateY(-1px);
+}
+
+/* モダンスクロールバー（統計パネル専用） */
+.stats-left::-webkit-scrollbar,
+.stats-right::-webkit-scrollbar {
+	width: 6px;
+	opacity: 0.3;
+	transition: opacity 0.3s ease;
+}
+
+.stats-left:hover::-webkit-scrollbar,
+.stats-right:hover::-webkit-scrollbar {
+	opacity: 1;
+}
+
+.stats-left::-webkit-scrollbar-track,
+.stats-right::-webkit-scrollbar-track {
+	background: var(--panel-bg);
+	border-radius: 6px;
+}
+
+.stats-left::-webkit-scrollbar-thumb,
+.stats-right::-webkit-scrollbar-thumb {
+	background: var(--border-color);
+	border-radius: 6px;
+	transition: all 0.3s ease;
+}
+
+.stats-left::-webkit-scrollbar-thumb:hover,
+.stats-right::-webkit-scrollbar-thumb:hover {
+	background: var(--progress-color);
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 1200px) {
+	.stats-body {
+		flex-direction: column;
+	}
+
+	.stats-left,
+	.stats-right {
+		flex: none;
+	}
+
+	.stats-left {
+		border-right: none;
+		border-bottom: 1px solid var(--border-color);
+		max-height: 40vh;
+	}
+
+	.graph-summary {
+		grid-template-columns: repeat(4, 1fr);
+	}
+
+	.graph-controls {
+		flex-direction: column;
+		align-items: stretch;
+	}
+
+	.control-group {
+		flex-direction: row;
+		justify-content: space-between;
+		align-items: center;
+	}
+}
+
+@media (max-width: 768px) {
+	#stats-content {
+		width: 98vw;
+		height: 95vh;
+	}
+
+	.graph-summary {
+		grid-template-columns: repeat(2, 1fr);
+	}
+
+	.keyboard-heatmap {
+		grid-template-columns: repeat(10, 1fr);
+	}
+
+	.graph-container {
+		height: 250px;
+	}
+
+	.canvas-container {
+		height: 220px;
+	}
 }
 
 /* シンプルフッターのスタイル（完全に地続き・間隔なし） */

@@ -56,6 +56,8 @@ const Utils = {
 			return DOM.customCodeArea.value;
 		} else if (DOM.langSel.value === "typewell") {
 			return this.generateTypeWellCode();
+		} else if (DOM.langSel.value === "typewell-english-words") {
+			return this.generateEnglishWordsCode();
 		} else if (DOM.langSel.value === "initial-speed") {
 			return ""; // Initial Speedは専用ロジックを使用
 		} else if (SNIPPETS[DOM.langSel.value]) {
@@ -170,6 +172,145 @@ const Utils = {
 		return result;
 	},
 
+	// English Words用コード生成（8行×50文字）
+	generateEnglishWordsCode() {
+		const CHARS_PER_LINE = 50;
+		const TOTAL_LINES = 8;
+		
+		// 選択された単語セットを取得
+		const selectedSet = this.getSelectedTypeWellEnglishWordsSet();
+		
+		// 単語セット別の英単語リスト（仮の実装、後でNGSLデータに置換）
+		const wordSets = {
+			top500: [
+				"the", "be", "to", "of", "and", "a", "in", "that", "have", "it",
+				"for", "not", "on", "with", "as", "you", "do", "at", "this", "but",
+				"his", "by", "from", "they", "she", "or", "an", "will", "my", "one",
+				"all", "would", "there", "their", "what", "so", "up", "out", "if", "about",
+				"who", "get", "which", "go", "me", "when", "make", "can", "like", "time",
+				"no", "just", "him", "know", "take", "people", "into", "year", "your", "good",
+				"some", "could", "them", "see", "other", "than", "then", "now", "look", "only",
+				"come", "its", "over", "think", "also", "back", "after", "use", "two", "how"
+			],
+			top1500: [
+				"our", "work", "first", "well", "way", "even", "new", "want", "because", "any",
+				"these", "give", "day", "most", "us", "is", "water", "long", "very", "after",
+				"where", "much", "before", "move", "right", "boy", "old", "too", "same", "tell",
+				"does", "set", "three", "want", "air", "well", "also", "play", "small", "end"
+			],
+			all: [
+				"place", "around", "large", "every", "turn", "why", "ask", "went", "men", "read",
+				"need", "land", "different", "home", "us", "move", "try", "kind", "hand", "picture",
+				"again", "change", "off", "play", "spell", "air", "away", "animal", "house", "point"
+			]
+		};
+
+		// 選択されたセットの単語を取得
+		const words = wordSets[selectedSet] || wordSets.top500;
+
+		// ランダム生成器の初期化
+		this._seedXorshift128();
+
+		let result = "";
+		let pendingWordRemainder = ""; // 前の行から継続する単語の残り部分
+		let currentPosition = 0; // 全体の文字位置
+
+		for (let line = 0; line < TOTAL_LINES; line++) {
+			let lineContent = "";
+			let currentLineLength = 0;
+
+			// 前の行から継続する単語の残り部分がある場合、それから開始
+			if (pendingWordRemainder) {
+				const remainderLength = Math.min(pendingWordRemainder.length, CHARS_PER_LINE);
+				lineContent += pendingWordRemainder.substring(0, remainderLength);
+				currentLineLength += remainderLength;
+				
+				// 残り部分が行に収まった場合
+				if (pendingWordRemainder.length <= CHARS_PER_LINE) {
+					pendingWordRemainder = "";
+					// 単語完了後はスペースを追加（行に余裕があれば）
+					if (currentLineLength < CHARS_PER_LINE) {
+						lineContent += " ";
+						currentLineLength++;
+					}
+				} else {
+					// 残り部分が行に収まらない場合、次の行に継続
+					pendingWordRemainder = pendingWordRemainder.substring(remainderLength);
+				}
+			}
+
+			// 行に余裕がある間、新しい単語を追加
+			while (currentLineLength < CHARS_PER_LINE && !pendingWordRemainder) {
+				// ランダムに単語を選択
+				const randomIndex = Math.floor(this._xorshift128() * words.length);
+				const word = words[randomIndex];
+				
+				// 単語 + スペースの長さを計算
+				const wordWithSpace = word + " ";
+				const wordLength = wordWithSpace.length;
+
+				// 最終行（8行目）では50文字で強制終了
+				if (line === TOTAL_LINES - 1) {
+					const remainingChars = CHARS_PER_LINE - currentLineLength;
+					if (remainingChars <= 0) break;
+					
+					if (wordLength <= remainingChars) {
+						// 単語全体が入る場合
+						lineContent += wordWithSpace;
+						currentLineLength += wordLength;
+					} else {
+						// 単語の一部のみ追加して終了
+						lineContent += word.substring(0, remainingChars);
+						currentLineLength = CHARS_PER_LINE;
+					}
+				} else {
+					// 通常の行での処理
+					if (currentLineLength + wordLength <= CHARS_PER_LINE) {
+						// 単語全体が行に入る場合
+						lineContent += wordWithSpace;
+						currentLineLength += wordLength;
+					} else {
+						// 単語が行を超える場合、分割して次の行に継続
+						const remainingChars = CHARS_PER_LINE - currentLineLength;
+						if (remainingChars > 0) {
+							lineContent += word.substring(0, remainingChars);
+							currentLineLength = CHARS_PER_LINE;
+							pendingWordRemainder = word.substring(remainingChars);
+						}
+					}
+				}
+			}
+
+			// 行の内容を正確に50文字にする
+			lineContent = lineContent.substring(0, CHARS_PER_LINE);
+			result += lineContent;
+
+			// 最後の行以外は改行を追加
+			if (line < TOTAL_LINES - 1) {
+				result += "\n";
+			}
+		}
+
+		return result;
+	},
+
+	// 選択されたデフォルト言語モードを取得
+	getSelectedDefaultMode() {
+		// DOMが存在しない場合はデフォルトを返す
+		if (typeof document === "undefined") {
+			return "normal";
+		}
+
+		const normalRadio = document.getElementById("default-normal");
+		const typewellRadio = document.getElementById("default-typewell");
+
+		if (normalRadio && normalRadio.checked) return "normal";
+		if (typewellRadio && typewellRadio.checked) return "typewell";
+
+		// デフォルトは通常モード
+		return "normal";
+	},
+
 	// 選択されたTypeWellモードを取得
 	getSelectedTypeWellMode() {
 		// DOMが存在しない場合はデフォルトを返す
@@ -189,6 +330,25 @@ const Utils = {
 
 		// デフォルトは小文字のみ
 		return "lowercase";
+	},
+
+	// 選択されたTypeWell English Words単語セットを取得
+	getSelectedTypeWellEnglishWordsSet() {
+		// DOMが存在しない場合はデフォルトを返す
+		if (typeof document === "undefined") {
+			return "top500";
+		}
+
+		const top500Radio = document.getElementById("typewell-english-words-top500");
+		const top1500Radio = document.getElementById("typewell-english-words-top1500");
+		const allRadio = document.getElementById("typewell-english-words-all");
+
+		if (top500Radio && top500Radio.checked) return "top500";
+		if (top1500Radio && top1500Radio.checked) return "top1500";
+		if (allRadio && allRadio.checked) return "all";
+
+		// デフォルトはTOP500
+		return "top500";
 	},
 
 	// Initial Speed用のランダム文字生成
@@ -288,20 +448,23 @@ const Utils = {
 		const bestTime = Math.min(...correctTimes);
 		const worstTime = Math.max(...correctTimes);
 
-		// 最終的な正解数をカウント（各試行で最終的に正解した数）
+		// 最初からミスらなかった文字数をカウント（各試行で最初の入力が正解だった数）
 		const totalTrials = Math.max(...results.map((r) => r.trial));
-		let finalCorrectCount = 0;
+		let firstTryCorrectCount = 0;
 
-		// 各試行について、最終的に正解したかを判定
+		// 各試行について、最初の入力が正解だったかを判定
 		for (let trial = 1; trial <= totalTrials; trial++) {
 			const trialResults = results.filter((r) => r.trial === trial);
-			const hasCorrect = trialResults.some((r) => r.correct);
-			if (hasCorrect) {
-				finalCorrectCount++;
+			if (trialResults.length > 0) {
+				// 時間順にソートして最初の結果を取得
+				const firstResult = trialResults.sort((a, b) => a.time - b.time)[0];
+				if (firstResult.correct) {
+					firstTryCorrectCount++;
+				}
 			}
 		}
 
-		const accuracy = Math.round((finalCorrectCount / totalTrials) * 100);
+		const accuracy = Math.round((firstTryCorrectCount / totalTrials) * 100);
 
 		return {
 			averageTime: Math.round(averageTime),

@@ -196,20 +196,24 @@ const Storage = {
 		return this.setJSON(CONSTANTS.STORAGE_KEYS.INITIAL_SPEED_MISTAKES, data);
 	},
 
-	// Initial Speedミス文字の記録
-	recordInitialSpeedMistake(language, expectedChar, inputChar) {
+	// Initial Speedミス文字の記録（本来打つべき文字のみ）
+	recordInitialSpeedMistake(language, expectedChar) {
 		const data = this.getInitialSpeedMistakes();
 
 		if (!data[language]) {
 			data[language] = {};
 		}
 
-		const mistakeKey = Utils.generateMistakeKey(expectedChar, inputChar);
+		// 特殊文字の表示名変換
+		let displayChar = expectedChar;
+		if (expectedChar === " ") displayChar = "Space";
+		else if (expectedChar === "\n") displayChar = "Enter";
+		else if (expectedChar === "\t") displayChar = "Tab";
 
-		if (data[language][mistakeKey]) {
-			data[language][mistakeKey]++;
+		if (data[language][displayChar]) {
+			data[language][displayChar]++;
 		} else {
-			data[language][mistakeKey] = 1;
+			data[language][displayChar] = 1;
 		}
 
 		this.saveInitialSpeedMistakes(data);

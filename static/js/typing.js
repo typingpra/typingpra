@@ -15,7 +15,7 @@ const Typing = {
 
 	// 現在のモードがTypeWellモードかどうかを判定
 	isTypeWellMode() {
-		if (DOM.langSel.value === "typewell") {
+		if (DOM.langSel.value === "typewell" || DOM.langSel.value === "typewell-english-words") {
 			return true;
 		}
 
@@ -28,6 +28,11 @@ const Typing = {
 		const codes = Storage.getSavedCodes();
 		if (codes[DOM.langSel.value]) {
 			return CustomCode.getCustomCodeMode(DOM.langSel.value) === "typewell";
+		}
+
+		// デフォルト言語でTypewellモードが選択されている場合
+		if (DOM.langSel.value !== "custom" && DOM.langSel.value !== "typewell" && DOM.langSel.value !== "typewell-english-words" && DOM.langSel.value !== "initial-speed") {
+			return Utils.getSelectedDefaultMode() === "typewell";
 		}
 
 		return false;
@@ -119,9 +124,9 @@ const Typing = {
 
 	// ページのレンダリング
 	renderPage() {
-		// TypeWellモード（オリジナル）でカウントダウン中はコードを表示しない
+		// TypeWellモード（オリジナル・English Words）でカウントダウン中はコードを表示しない
 		if (
-			DOM.langSel.value === "typewell" &&
+			(DOM.langSel.value === "typewell" || DOM.langSel.value === "typewell-english-words") &&
 			APP_STATE.typewellState === "countdown"
 		) {
 			return;
@@ -147,8 +152,8 @@ const Typing = {
 			document.body.classList.remove("initial-speed-mode");
 		}
 
-		// TypeWellオリジナルモードの特別処理
-		if (DOM.langSel.value === "typewell") {
+		// TypeWellオリジナルモード・TypeWell English Wordsモードの特別処理
+		if (DOM.langSel.value === "typewell" || DOM.langSel.value === "typewell-english-words") {
 			document.body.classList.add("typewell-mode");
 			document.body.classList.add("typewell-original-mode");
 			// タイプウェルモードの場合は待機状態に設定
@@ -159,6 +164,24 @@ const Typing = {
 			document.body.classList.remove("typewell-mode");
 			document.body.classList.remove("typewell-original-mode");
 			this.hideTypeWellScreens();
+		}
+
+		// Word Practiceモードの特別処理
+		if (DOM.langSel.value === "word-practice") {
+			document.body.classList.add("word-practice-mode");
+			// Word Practiceモードの場合は待機状態に設定
+			APP_STATE.wordPracticeState = "waiting";
+			UI.showWordPracticeStartScreen();
+			return;
+		} else {
+			document.body.classList.remove("word-practice-mode");
+			// Word Practice画面を非表示
+			if (DOM.wordPracticeStartScreen) {
+				DOM.wordPracticeStartScreen.style.display = "none";
+			}
+			if (DOM.wordPracticePracticeScreen) {
+				DOM.wordPracticePracticeScreen.style.display = "none";
+			}
 		}
 
 		// カスタムコードでTypeWellモードが選択されている場合
@@ -266,6 +289,7 @@ const Typing = {
 		APP_STATE.initialSpeedCurrentTrial = 0;
 		APP_STATE.initialSpeedResults = [];
 		APP_STATE.initialSpeedCurrentMistakes = [];
+		APP_STATE.initialSpeedCurrentTrialMistakes = new Set(); // 現在の試行でミスした文字を追跡
 		APP_STATE.initialSpeedConsecutiveMisses = 0; // 連続ミスカウンターをリセット
 
 		// 初期状態設定
@@ -282,6 +306,9 @@ const Typing = {
 	startInitialSpeedTrial() {
 		APP_STATE.initialSpeedCurrentTrial++;
 		APP_STATE.initialSpeedState = "starting";
+		
+		// 現在の試行のミス文字セットをリセット
+		APP_STATE.initialSpeedCurrentTrialMistakes = new Set();
 
 		// 文字を隠す
 		if (DOM.initialSpeedCharacter) {
@@ -298,12 +325,10 @@ const Typing = {
 		if (DOM.initialSpeedStatus) {
 			if (APP_STATE.initialSpeedCurrentTrial === 1) {
 				DOM.initialSpeedStatus.textContent = "Starting...";
-				DOM.initialSpeedStatus.className = "initial-speed-status";
-				DOM.initialSpeedStatus.style.color = ""; // 色をリセット
-			} else {
-				DOM.initialSpeedStatus.textContent = "";
+				DOM.initialSpeedStatus.className = "initial-speed-status starting-message";
 				DOM.initialSpeedStatus.style.color = ""; // 色をリセット
 			}
+			// 2回目以降はステータスをクリアしない（タイム表示を維持）
 		}
 
 		// 待機時間は常に1秒（ただし2回目以降はStarting...を表示しない）
@@ -331,7 +356,7 @@ const Typing = {
 			DOM.initialSpeedCharacter.className = "initial-speed-character";
 		}
 
-		// ステータス更新
+		// ステータス更新（新しい文字表示時にタイム表示をクリア）
 		if (DOM.initialSpeedStatus) {
 			DOM.initialSpeedStatus.textContent = "";
 			DOM.initialSpeedStatus.style.color = ""; // 色をリセット
@@ -378,7 +403,7 @@ const Typing = {
 				inputChar,
 				expectedChar,
 			);
-			this.proceedToNextTrial();
+			this.proceedToNextTrial(reactionTime);
 		} else {
 			// 不正解 - 連続ミスカウンターを増加
 			APP_STATE.initialSpeedConsecutiveMisses++;
@@ -406,6 +431,7 @@ const Typing = {
 			// ミスタイプ時はその場で停止、正しい文字の入力を待つ
 		}
 	},
+
 
 	// Initial Speed練習の早期終了（連続3回ミス）
 	endInitialSpeedPracticeEarly() {
@@ -436,6 +462,7 @@ const Typing = {
 		APP_STATE.initialSpeedCurrentTrial = 0;
 		APP_STATE.initialSpeedResults = [];
 		APP_STATE.initialSpeedCurrentMistakes = [];
+		APP_STATE.initialSpeedCurrentTrialMistakes = new Set();
 		APP_STATE.initialSpeedConsecutiveMisses = 0;
 
 		// ステータスと文字をクリア
@@ -466,17 +493,24 @@ const Typing = {
 
 		// ミスの場合はミス記録にも追加
 		if (!correct) {
-			this.recordInitialSpeedMistake(expectedChar, inputChar);
+			this.recordInitialSpeedMistake(expectedChar);
 		}
 	},
 
-	// Initial Speedミス記録
-	recordInitialSpeedMistake(expectedChar, inputChar) {
-		APP_STATE.initialSpeedCurrentMistakes.push({ expectedChar, inputChar });
+	// Initial Speedミス記録（1試行につき1文字1回まで）
+	recordInitialSpeedMistake(expectedChar) {
+		// 現在の試行で既に記録済みの文字はスキップ
+		if (APP_STATE.initialSpeedCurrentTrialMistakes.has(expectedChar)) {
+			return;
+		}
+		
+		// 現在の試行でのミス文字として記録
+		APP_STATE.initialSpeedCurrentTrialMistakes.add(expectedChar);
+		APP_STATE.initialSpeedCurrentMistakes.push({ expectedChar });
 
 		// Initial Speed専用のミス統計に記録
 		const languageName = this.getInitialSpeedLanguageName();
-		Storage.recordInitialSpeedMistake(languageName, expectedChar, inputChar);
+		Storage.recordInitialSpeedMistake(languageName, expectedChar);
 	},
 
 	// Initial Speed言語名取得
@@ -486,13 +520,8 @@ const Typing = {
 	},
 
 	// Initial Speed次の試行への進行（進捗表示なし）
-	proceedToNextTrial() {
+	proceedToNextTrial(reactionTime = null) {
 		APP_STATE.initialSpeedState = "between";
-
-		// ステータスを隠す
-		if (DOM.initialSpeedStatus) {
-			DOM.initialSpeedStatus.textContent = "";
-		}
 
 		// 文字を隠す
 		if (DOM.initialSpeedCharacter) {
@@ -503,6 +532,20 @@ const Typing = {
 		// 進捗表示は削除（不要）
 		if (DOM.initialSpeedProgress) {
 			DOM.initialSpeedProgress.textContent = "";
+		}
+
+		// 正解した場合はタイム表示（文字が隠れた状態で）
+		if (reactionTime !== null && DOM.initialSpeedStatus) {
+			DOM.initialSpeedStatus.textContent = Utils.formatReactionTime(reactionTime);
+			DOM.initialSpeedStatus.className = "initial-speed-status reaction-time";
+			DOM.initialSpeedStatus.style.color = ""; // CSSクラスの色を使用
+		} else {
+			// ステータスを隠す（ミスの場合など）
+			if (DOM.initialSpeedStatus) {
+				DOM.initialSpeedStatus.textContent = "";
+				DOM.initialSpeedStatus.className = "initial-speed-status";
+				DOM.initialSpeedStatus.style.color = ""; // 色をリセット
+			}
 		}
 
 		// 次の試行または完了処理（待機時間なしで即座に実行）
@@ -558,11 +601,10 @@ const Typing = {
 		// 詳細結果の生成
 		this.generateInitialSpeedDetailedResults();
 
-		// TOP3ランキングの取得
+		// 全記録中の順位を計算
 		const languageName = this.getInitialSpeedLanguageName();
-		const top3Records = Stats.getTop3Records(languageName, 1);
 		const currentAverageTime = stats.averageTime / 1000; // 秒に変換
-		const rankStatus = Stats.checkRankIn(languageName, 1, currentAverageTime);
+		const rankInfo = Stats.calculateRankByTime(languageName, 1, currentAverageTime);
 
 		// 現在のセッションのミス統計
 		const sessionMistakes = this.getInitialSpeedSessionMistakes(3);
@@ -570,8 +612,7 @@ const Typing = {
 		// リザルト表示の更新
 		this.updateInitialSpeedResultsDisplay(
 			stats,
-			top3Records,
-			rankStatus,
+			rankInfo,
 			sessionMistakes,
 		);
 
@@ -623,8 +664,7 @@ const Typing = {
 	// Initial Speedリザルト表示更新
 	updateInitialSpeedResultsDisplay(
 		stats,
-		top3Records,
-		rankStatus,
+		rankInfo,
 		sessionMistakes,
 	) {
 		// Initial Speed専用リザルトセクションを表示
@@ -649,6 +689,8 @@ const Typing = {
 
 		// サマリー統計
 		if (DOM.initialSpeedSummary) {
+			const rankText = `#${rankInfo.rank}`;
+			
 			DOM.initialSpeedSummary.innerHTML = `
 				<div class="initial-speed-summary-grid">
 					<div class="summary-stat">
@@ -671,6 +713,10 @@ const Typing = {
 						<span class="summary-label">Total Mistakes:</span>
 						<span class="summary-value">${stats.totalMistakes}</span>
 					</div>
+					<div class="summary-stat">
+						<span class="summary-label">Rank:</span>
+						<span class="summary-value">${rankText}</span>
+					</div>
 				</div>
 			`;
 		}
@@ -687,8 +733,7 @@ const Typing = {
 			characterCountEl.textContent = `${APP_STATE.initialSpeedTotalTrials} trials`;
 		}
 
-		// TOP3ランキング表示
-		this.updateInitialSpeedRanking(top3Records, rankStatus, stats);
+		// 従来のランキング表示を無効化（Initial Speedは独自表示を使用）
 
 		// ミス文字表示
 		this.updateInitialSpeedMistakes(sessionMistakes);
@@ -734,12 +779,17 @@ const Typing = {
 			return [];
 		}
 
-		// ミスの集計
+		// ミスの集計（本来打つべき文字のみ）
 		const mistakeCount = {};
 		APP_STATE.initialSpeedCurrentMistakes.forEach(
-			({ expectedChar, inputChar }) => {
-				const mistakeKey = Utils.generateMistakeKey(expectedChar, inputChar);
-				mistakeCount[mistakeKey] = (mistakeCount[mistakeKey] || 0) + 1;
+			({ expectedChar }) => {
+				// 特殊文字の表示名変換
+				let displayChar = expectedChar;
+				if (expectedChar === " ") displayChar = "Space";
+				else if (expectedChar === "\n") displayChar = "Enter";
+				else if (expectedChar === "\t") displayChar = "Tab";
+				
+				mistakeCount[displayChar] = (mistakeCount[displayChar] || 0) + 1;
 			},
 		);
 
@@ -750,12 +800,52 @@ const Typing = {
 			.map(([mistake, count]) => ({ mistake, count }));
 	},
 
+	// TypeWell詳細結果生成
+	generateTypeWellDetailedResults() {
+		if (!DOM.typewellDetailedResults) return;
+
+		const lineTimes = APP_STATE.typewellLineTimes;
+		if (!lineTimes || lineTimes.length === 0) return;
+
+		const fastestTime = Math.min(...lineTimes.map((l) => l.time));
+		const slowestTime = Math.max(...lineTimes.map((l) => l.time));
+
+		let html = '<div class="typewell-lines-list">';
+
+		lineTimes.forEach((lineData) => {
+			const isFastest = lineData.time === fastestTime;
+			const isSlowest = lineData.time === slowestTime;
+			const badge = isFastest ? " ✓ (Fastest)" : isSlowest ? " (Slowest)" : "";
+
+			html += `
+				<div class="line-result">
+					<span class="line-number">Line ${lineData.line}:</span>
+					<span class="line-time">${lineData.time.toFixed(3)}s${badge}</span>
+					<span></span>
+				</div>
+			`;
+		});
+
+		html += "</div>";
+		DOM.typewellDetailedResults.innerHTML = html;
+	},
+
 	// タイプウェルスタート画面の表示
 	showTypeWellStartScreen() {
-		if (DOM.typewellStartScreen) {
-			DOM.typewellStartScreen.style.display = "flex";
-			this.updateTypeWellModeDisplay();
+		if (DOM.langSel.value === "typewell") {
+			// TypeWell オリジナルモード
+			if (DOM.typewellStartScreen) {
+				DOM.typewellStartScreen.style.display = "flex";
+				this.updateTypeWellModeDisplay();
+			}
+		} else if (DOM.langSel.value === "typewell-english-words") {
+			// TypeWell English Words モード
+			if (DOM.typewellEnglishWordsStartScreen) {
+				DOM.typewellEnglishWordsStartScreen.style.display = "flex";
+				UI.updateTypeWellEnglishWordsStartDisplay();
+			}
 		}
+		
 		if (DOM.typewellCountdown) {
 			DOM.typewellCountdown.style.display = "none";
 		}
@@ -770,6 +860,9 @@ const Typing = {
 		if (DOM.typewellStartScreen) {
 			DOM.typewellStartScreen.style.display = "none";
 		}
+		if (DOM.typewellEnglishWordsStartScreen) {
+			DOM.typewellEnglishWordsStartScreen.style.display = "none";
+		}
 		if (DOM.typewellCountdown) {
 			DOM.typewellCountdown.style.display = "flex";
 		}
@@ -783,6 +876,9 @@ const Typing = {
 	hideTypeWellScreens() {
 		if (DOM.typewellStartScreen) {
 			DOM.typewellStartScreen.style.display = "none";
+		}
+		if (DOM.typewellEnglishWordsStartScreen) {
+			DOM.typewellEnglishWordsStartScreen.style.display = "none";
 		}
 		if (DOM.typewellCountdown) {
 			DOM.typewellCountdown.style.display = "none";
@@ -885,7 +981,7 @@ const Typing = {
 	// タイプウェル開始ボタンのクリックハンドラー
 	startTypeWellFromClick() {
 		if (
-			DOM.langSel.value === "typewell" &&
+			(DOM.langSel.value === "typewell" || DOM.langSel.value === "typewell-english-words") &&
 			APP_STATE.typewellState === "waiting"
 		) {
 			this.startTypeWellCountdown();
@@ -955,7 +1051,16 @@ const Typing = {
 					span.dataset.char = char;
 				}
 
-				span.textContent = char;
+				// TypeWellオリジナルの小文字モードの場合、表示を大文字に変換
+				let displayChar = char;
+				if (DOM.langSel.value === "typewell" && Utils.getSelectedTypeWellMode() === "lowercase") {
+					// 小文字のアルファベットのみ大文字に変換（空白やカンマ、ピリオドはそのまま）
+					if (/^[a-z]$/.test(char)) {
+						displayChar = char.toUpperCase();
+					}
+				}
+
+				span.textContent = displayChar;
 				charContainer.appendChild(span);
 			}
 
@@ -963,9 +1068,9 @@ const Typing = {
 			if (line.trim() !== "" || idx === APP_STATE.allLines.length - 1) {
 				const nl = document.createElement("span");
 
-				// TypeWellオリジナルモードでは改行も自動スキップ
+				// TypeWellオリジナルモード・TypeWell English Wordsモードでは改行も自動スキップ
 				// カスタムコードのTypeWellモードでは改行をタイピング対象にする
-				if (DOM.langSel.value === "typewell") {
+				if (DOM.langSel.value === "typewell" || DOM.langSel.value === "typewell-english-words") {
 					nl.className = "char multibyte-skip newline";
 					// data-char属性を付けない = タイピング対象外
 				} else {
@@ -1037,7 +1142,7 @@ const Typing = {
 		APP_STATE.isBreakActive = false; // 休憩機能：休憩状態リセット
 
 		// タイプウェル状態のリセット
-		if (DOM.langSel.value === "typewell") {
+		if (DOM.langSel.value === "typewell" || DOM.langSel.value === "typewell-english-words") {
 			APP_STATE.typewellState = "waiting";
 			APP_STATE.typewellLineTimes = [];
 			APP_STATE.typewellCurrentLine = 0;
@@ -1049,6 +1154,18 @@ const Typing = {
 			APP_STATE.initialSpeedCurrentTrial = 0;
 			APP_STATE.initialSpeedResults = [];
 			APP_STATE.initialSpeedCurrentMistakes = [];
+			APP_STATE.initialSpeedCurrentTrialMistakes = new Set();
+		}
+
+		// Word Practice状態のリセット
+		if (DOM.langSel.value === "word-practice") {
+			APP_STATE.wordPracticeState = "waiting";
+			APP_STATE.wordPracticeCurrentWord = 0;
+			APP_STATE.wordPracticeWords = [];
+			APP_STATE.wordPracticeResults = [];
+			APP_STATE.wordPracticeWordStartTime = null;
+			APP_STATE.wordPracticeFirstKeyTime = null;
+			APP_STATE.wordPracticeFirstKeyPressed = false;
 		}
 
 		this.currentHighlightIndex = -1;
@@ -1121,7 +1238,25 @@ const Typing = {
 				const expectedChar = span.dataset.char;
 				const typedChar = APP_STATE.inputBuffer[i];
 
-				if (typedChar === expectedChar) {
+				// TypeWell英単語モードおよび小文字モードでは大文字・小文字を区別しない判定
+				let isMatch = false;
+				if (DOM.langSel.value === "typewell-english-words") {
+					if (/^[a-zA-Z]$/.test(expectedChar)) {
+						isMatch = typedChar.toLowerCase() === expectedChar.toLowerCase();
+					} else {
+						isMatch = typedChar === expectedChar;
+					}
+				} else if (DOM.langSel.value === "typewell" && Utils.getSelectedTypeWellMode() === "lowercase") {
+					if (/^[a-z]$/.test(expectedChar)) {
+						isMatch = typedChar.toLowerCase() === expectedChar;
+					} else {
+						isMatch = typedChar === expectedChar;
+					}
+				} else {
+					isMatch = typedChar === expectedChar;
+				}
+
+				if (isMatch) {
 					span.className = `char correct${span.classList.contains("newline") ? " newline" : ""}`;
 					correctCount++;
 					if (currentCorrectPosition === i) {
@@ -1149,7 +1284,12 @@ const Typing = {
 				if (span.dataset.char === "\n") {
 					span.textContent = "⏎";
 				} else {
-					span.textContent = span.dataset.char;
+					// TypeWell小文字モードでは大文字表示を維持
+					if (DOM.langSel.value === "typewell" && Utils.getSelectedTypeWellMode() === "lowercase" && /^[a-z]$/.test(span.dataset.char)) {
+						span.textContent = span.dataset.char.toUpperCase();
+					} else {
+						span.textContent = span.dataset.char;
+					}
 				}
 			}
 		}
@@ -1166,6 +1306,11 @@ const Typing = {
 
 		this.highlightCurrent();
 		this.updateStats(correctCount, targets.length);
+
+		// TypeWellモードで行完了チェック
+		if ((DOM.langSel.value === "typewell" || DOM.langSel.value === "typewell-english-words") && APP_STATE.startTime) {
+			this.checkTypeWellLineCompletion();
+		}
 
 		// 完了チェック
 		if (inputLength >= targets.length && correctCount === targets.length) {
@@ -1317,9 +1462,13 @@ const Typing = {
 					this.preparePages();
 					this.resetState();
 					this.renderPage();
-				} else if (DOM.langSel.value === "typewell") {
-					// TypeWellオリジナルモードでは常に新しいランダムコードを生成
+				} else if (DOM.langSel.value === "typewell" || DOM.langSel.value === "typewell-english-words") {
+					// TypeWellオリジナルモード・TypeWell English Wordsモードでは常に新しいランダムコードを生成
 					this.preparePages();
+					this.resetState();
+					this.renderPage();
+				} else if (DOM.langSel.value === "word-practice") {
+					// Word Practiceモードでは新しい練習を開始
 					this.resetState();
 					this.renderPage();
 				} else if (APP_STATE.currentPage < APP_STATE.pages.length - 1) {
@@ -1338,8 +1487,8 @@ const Typing = {
 	retry() {
 		if (DOM.overlay.style.visibility === "visible") {
 			UI.hideOverlay(() => {
-				if (this.isInitialSpeedMode() || DOM.langSel.value === "typewell") {
-					// Initial SpeedモードまたはTypeWellオリジナルモードでは新しい練習を生成
+				if (this.isInitialSpeedMode() || DOM.langSel.value === "typewell" || DOM.langSel.value === "word-practice") {
+					// Initial Speed、TypeWell、Word Practiceモードでは新しい練習を生成
 					this.preparePages();
 					this.resetState();
 					this.renderPage();
@@ -1349,8 +1498,8 @@ const Typing = {
 				}
 			});
 		} else {
-			if (this.isInitialSpeedMode() || DOM.langSel.value === "typewell") {
-				// Initial SpeedモードまたはTypeWellオリジナルモードでは新しい練習を生成
+			if (this.isInitialSpeedMode() || DOM.langSel.value === "typewell" || DOM.langSel.value === "typewell-english-words" || DOM.langSel.value === "word-practice") {
+				// Initial Speed、TypeWell、TypeWell English Words、Word Practiceモードでは新しい練習を生成
 				this.preparePages();
 				this.resetState();
 				this.renderPage();
@@ -1365,8 +1514,8 @@ const Typing = {
 	restartAll() {
 		if (DOM.overlay.style.visibility === "visible") {
 			UI.hideOverlay(() => {
-				if (this.isInitialSpeedMode() || DOM.langSel.value === "typewell") {
-					// Initial SpeedモードまたはTypeWellオリジナルモードでは新しい練習を生成
+				if (this.isInitialSpeedMode() || DOM.langSel.value === "typewell" || DOM.langSel.value === "word-practice") {
+					// Initial Speed、TypeWell、Word Practiceモードでは新しい練習を生成
 					this.preparePages();
 					this.resetState();
 					this.renderPage();
@@ -1378,8 +1527,8 @@ const Typing = {
 				}
 			});
 		} else {
-			if (this.isInitialSpeedMode() || DOM.langSel.value === "typewell") {
-				// Initial SpeedモードまたはTypeWellオリジナルモードでは新しい練習を生成
+			if (this.isInitialSpeedMode() || DOM.langSel.value === "typewell" || DOM.langSel.value === "typewell-english-words" || DOM.langSel.value === "word-practice") {
+				// Initial Speed、TypeWell、TypeWell English Words、Word Practiceモードでは新しい練習を生成
 				this.preparePages();
 				this.resetState();
 				this.renderPage();
@@ -1417,9 +1566,9 @@ const Typing = {
 			}
 		}
 
-		// タイプウェルオリジナルモードでスタート待機中の場合
+		// タイプウェルオリジナルモード・TypeWell English Wordsモードでスタート待機中の場合
 		if (
-			DOM.langSel.value === "typewell" &&
+			(DOM.langSel.value === "typewell" || DOM.langSel.value === "typewell-english-words") &&
 			APP_STATE.typewellState === "waiting"
 		) {
 			if (key === "Enter" || key === " ") {
@@ -1429,9 +1578,9 @@ const Typing = {
 			return;
 		}
 
-		// タイプウェルオリジナルモードでカウントダウン中の場合は入力を無視
+		// タイプウェルオリジナルモード・TypeWell English Wordsモードでカウントダウン中の場合は入力を無視
 		if (
-			DOM.langSel.value === "typewell" &&
+			(DOM.langSel.value === "typewell" || DOM.langSel.value === "typewell-english-words") &&
 			APP_STATE.typewellState === "countdown"
 		) {
 			return;
@@ -1452,7 +1601,28 @@ const Typing = {
 			APP_STATE.totalKeystrokes++;
 
 			// 期待される文字と一致するかチェック
-			if (expectedChar && ch === expectedChar) {
+			let isMatch = false;
+			if (expectedChar) {
+				// TypeWell English Wordsモードでは大文字小文字を区別しない
+				if (DOM.langSel.value === "typewell-english-words") {
+					if (/^[a-zA-Z]$/.test(expectedChar)) {
+						isMatch = ch.toLowerCase() === expectedChar.toLowerCase();
+					} else {
+						isMatch = ch === expectedChar;
+					}
+				} else if (DOM.langSel.value === "typewell" && Utils.getSelectedTypeWellMode() === "lowercase") {
+					// TypeWell小文字モードでは大文字・小文字どちらでも正解とする
+					if (/^[a-z]$/.test(expectedChar)) {
+						isMatch = ch.toLowerCase() === expectedChar;
+					} else {
+						isMatch = ch === expectedChar;
+					}
+				} else {
+					isMatch = ch === expectedChar;
+				}
+			}
+			
+			if (isMatch) {
 				// 正しい文字の場合：前回のミスタイプ表示をクリア
 				const currentSpan = this.cachedTargets[APP_STATE.inputBuffer.length];
 				if (currentSpan && currentSpan.classList.contains("incorrect")) {
@@ -1461,7 +1631,12 @@ const Typing = {
 					if (currentSpan.dataset.char === "\n") {
 						currentSpan.textContent = "⏎";
 					} else {
-						currentSpan.textContent = currentSpan.dataset.char;
+						// TypeWell小文字モードでは大文字表示を維持
+						if (DOM.langSel.value === "typewell" && Utils.getSelectedTypeWellMode() === "lowercase" && /^[a-z]$/.test(currentSpan.dataset.char)) {
+							currentSpan.textContent = currentSpan.dataset.char.toUpperCase();
+						} else {
+							currentSpan.textContent = currentSpan.dataset.char;
+						}
 					}
 				}
 
@@ -1475,17 +1650,6 @@ const Typing = {
 
 				// 正しい改行の場合のみ休憩判定
 				if (ch === "\n" && expectedChar === "\n") {
-					// タイプウェルモードの場合は行ラップタイムを記録
-					if (DOM.langSel.value === "typewell" && APP_STATE.startTime) {
-						const currentTime = Date.now();
-						const elapsedTime = (currentTime - APP_STATE.startTime) / 1000;
-						APP_STATE.typewellLineTimes.push({
-							line: APP_STATE.typewellCurrentLine + 1,
-							time: elapsedTime
-						});
-						APP_STATE.typewellCurrentLine++;
-					}
-					
 					this.checkAndShowBreak();
 				}
 			} else {
@@ -1558,6 +1722,48 @@ const Typing = {
 		this.updateDisplay();
 	},
 
+	// TypeWellモードでの行完了チェック
+	checkTypeWellLineCompletion() {
+		const currentPosition = APP_STATE.inputBuffer.length;
+		const page = APP_STATE.pages[APP_STATE.currentPage];
+		
+		// 各行の累積文字数を計算
+		let cumulativeLength = 0;
+		for (let i = 0; i < page.length; i++) {
+			const lineData = page[i];
+			cumulativeLength += lineData.line.length;
+			
+			// 現在の入力位置がこの行の終端に到達し、まだ記録していない場合
+			if (currentPosition === cumulativeLength && i >= APP_STATE.typewellCurrentLine) {
+				const currentTime = Date.now();
+				const totalElapsedTime = (currentTime - APP_STATE.startTime) / 1000;
+				
+				// ラップタイムを計算（前の行からの差分時間）
+				let lapTime;
+				if (APP_STATE.typewellLineTimes.length === 0) {
+					// 1行目は開始からの時間
+					lapTime = totalElapsedTime;
+				} else {
+					// 2行目以降は前の行の完了時刻からの差分
+					const previousTotalTime = APP_STATE.typewellLineTimes.reduce((sum, lt) => sum + lt.time, 0);
+					lapTime = totalElapsedTime - previousTotalTime;
+				}
+				
+				APP_STATE.typewellLineTimes.push({
+					line: i + 1,
+					time: lapTime
+				});
+				APP_STATE.typewellCurrentLine = i + 1;
+				break; // 1行完了したら処理終了
+			}
+			
+			// 現在位置がこの行を超えていない場合は処理終了
+			if (currentPosition < cumulativeLength) {
+				break;
+			}
+		}
+	},
+
 	// バックスペースの処理
 	handleBackspace() {
 		// 休憩中の場合は入力を無視
@@ -1580,6 +1786,330 @@ const Typing = {
 
 			APP_STATE.inputBuffer = APP_STATE.inputBuffer.slice(0, -1);
 			this.updateDisplay();
+		}
+	},
+
+	// Word Practice関連機能
+
+	// Word Practice開始ボタンのクリックハンドラー
+	startWordPracticeFromClick() {
+		if (
+			DOM.langSel.value === "word-practice" &&
+			APP_STATE.wordPracticeState === "waiting"
+		) {
+			this.startWordPracticePractice();
+		}
+	},
+
+	// Word Practice練習の開始
+	startWordPracticePractice() {
+		// 設定を取得
+		const selectedSet = document.querySelector('input[name="word-practice-set"]:checked');
+		const setName = selectedSet ? selectedSet.value : 'top500';
+		const wordCount = parseInt(DOM.wordPracticeCountSelect?.value || '10');
+
+		// 単語リストを取得
+		const allWords = getWordsBySet(setName);
+		
+		// 指定された数の単語をランダムに選択
+		APP_STATE.wordPracticeWords = this.selectRandomWords(allWords, wordCount);
+		APP_STATE.wordPracticeTotalWords = wordCount;
+		APP_STATE.wordPracticeCurrentWord = 0;
+		APP_STATE.wordPracticeResults = [];
+		APP_STATE.wordPracticeState = "starting";
+
+		// 練習画面を表示
+		this.showWordPracticePracticeScreen();
+
+		// 1秒待機後に最初の単語を表示
+		setTimeout(() => {
+			if (APP_STATE.wordPracticeState === "starting") {
+				APP_STATE.wordPracticeState = "practicing";
+				this.displayCurrentWord();
+			}
+		}, 1000);
+
+		// 入力フィールドにフォーカスを設定
+		if (DOM.inputEl) {
+			DOM.inputEl.focus();
+		}
+	},
+
+	// ランダムに単語を選択
+	selectRandomWords(wordList, count) {
+		const shuffled = [...wordList].sort(() => 0.5 - Math.random());
+		return shuffled.slice(0, count);
+	},
+
+	// Word Practice練習画面の表示
+	showWordPracticePracticeScreen() {
+		// 他の画面を非表示
+		UI.hideAllSpecialScreens();
+		
+		// 前回の単語表示をクリア
+		if (DOM.wordPracticeWord) {
+			DOM.wordPracticeWord.textContent = "";
+			DOM.wordPracticeWord.className = "word-practice-word";
+			// 進捗表示の上下動を防ぐため最小高さを設定（縦長に調整）
+			DOM.wordPracticeWord.style.minHeight = "80px";
+			DOM.wordPracticeWord.style.lineHeight = "80px";
+		}
+		
+		// 前回の進捗表示をクリア（固定高さ設定）
+		if (DOM.wordPracticeProgress) {
+			DOM.wordPracticeProgress.textContent = "";
+			DOM.wordPracticeProgress.style.height = "30px";
+			DOM.wordPracticeProgress.style.lineHeight = "30px";
+		}
+		
+		// Word Practice練習画面を表示
+		if (DOM.wordPracticePracticeScreen) {
+			DOM.wordPracticePracticeScreen.style.display = "flex";
+		}
+		
+		// 通常のコード表示を隠す
+		if (DOM.codeEl) {
+			DOM.codeEl.style.display = "none";
+		}
+	},
+
+	// 現在の単語を表示
+	displayCurrentWord() {
+		const currentWordData = APP_STATE.wordPracticeWords[APP_STATE.wordPracticeCurrentWord];
+		
+		if (DOM.wordPracticeWord && currentWordData) {
+			DOM.wordPracticeWord.textContent = currentWordData;
+			DOM.wordPracticeWord.className = "word-practice-word";
+		}
+
+		// 進捗更新
+		this.updateWordPracticeProgress();
+
+		// 単語開始時間を記録
+		APP_STATE.wordPracticeWordStartTime = Date.now();
+		APP_STATE.wordPracticeFirstKeyPressed = false;
+		APP_STATE.inputBuffer = "";
+	},
+
+	// Word Practice進捗更新
+	updateWordPracticeProgress() {
+		if (DOM.wordPracticeProgress) {
+			const progress = `${APP_STATE.wordPracticeCurrentWord + 1} / ${APP_STATE.wordPracticeTotalWords}`;
+			DOM.wordPracticeProgress.textContent = progress;
+		}
+	},
+
+	// Word Practiceキー入力処理（TypeWellモード同様の厳格な入力方式）
+	handleWordPracticeInput(key) {
+		if (APP_STATE.wordPracticeState !== "practicing") {
+			return;
+		}
+
+		const currentWord = APP_STATE.wordPracticeWords[APP_STATE.wordPracticeCurrentWord];
+		if (!currentWord) return;
+
+		// 最初のキー押下時間を記録
+		if (!APP_STATE.wordPracticeFirstKeyPressed) {
+			APP_STATE.wordPracticeFirstKeyTime = Date.now();
+			APP_STATE.wordPracticeFirstKeyPressed = true;
+		}
+
+		// スペースキーで単語完了（入力が完全に一致している場合のみ）
+		if (key === " ") {
+			if (APP_STATE.inputBuffer === currentWord) {
+				this.completeCurrentWord();
+			}
+			return;
+		}
+
+		// 通常の文字入力 - TypeWellモード同様の厳格な処理
+		if (key.length === 1) {
+			const currentPosition = APP_STATE.inputBuffer.length;
+			const expectedChar = currentWord[currentPosition];
+			
+			if (expectedChar && key === expectedChar) {
+				// 正しい文字の場合のみ進む
+				APP_STATE.inputBuffer += key;
+				this.updateWordPracticeDisplay();
+				
+				// 単語が完全に一致した場合は完了
+				if (APP_STATE.inputBuffer === currentWord) {
+					this.completeCurrentWord();
+				}
+			} else {
+				// ミスタイプの場合はその場で停止（TypeWellモード同様）
+				// 視覚的にミスを表示
+				this.showWordPracticeError();
+			}
+		}
+	},
+
+	// Word Practiceエラー表示
+	showWordPracticeError() {
+		// TypeWell Originalモード同様に、ミス位置の文字を赤く表示
+		const currentWord = APP_STATE.wordPracticeWords[APP_STATE.wordPracticeCurrentWord];
+		const input = APP_STATE.inputBuffer;
+		
+		if (DOM.wordPracticeWord && currentWord) {
+			let displayHtml = '';
+			
+			for (let i = 0; i < currentWord.length; i++) {
+				const char = currentWord[i];
+				if (i < input.length) {
+					if (input[i] === char) {
+						displayHtml += `<span class="correct">${char}</span>`;
+					} else {
+						displayHtml += `<span class="incorrect">${char}</span>`;
+					}
+				} else if (i === input.length) {
+					// ミスした位置の文字のみ赤く表示（TypeWell同様）
+					displayHtml += `<span class="char incorrect">${char}</span>`;
+				} else {
+					// ミス時は他の文字を完全に通常色で表示（グレー表示禁止）
+					displayHtml += `<span style="color: var(--text-color);">${char}</span>`;
+				}
+			}
+			
+			DOM.wordPracticeWord.innerHTML = displayHtml;
+			
+			// 色を元に戻す処理は不要（ミス時は正しい文字が入力されるまで赤いまま）
+		}
+	},
+
+	// Word Practice表示更新
+	updateWordPracticeDisplay() {
+		const currentWord = APP_STATE.wordPracticeWords[APP_STATE.wordPracticeCurrentWord];
+		const input = APP_STATE.inputBuffer;
+		
+		if (DOM.wordPracticeWord && currentWord) {
+			let displayHtml = '';
+			
+			for (let i = 0; i < currentWord.length; i++) {
+				const char = currentWord[i];
+				if (i < input.length) {
+					if (input[i] === char) {
+						displayHtml += `<span class="correct">${char}</span>`;
+					} else {
+						displayHtml += `<span class="incorrect">${char}</span>`;
+					}
+				} else {
+					// 入力開始前のみグレー表示、入力開始後は完全に通常色で表示
+					if (input.length === 0) {
+						displayHtml += `<span class="pending">${char}</span>`;
+					} else {
+						// 入力開始後は一切グレー表示しない（通常色のみ）
+						displayHtml += `<span style="color: var(--text-color);">${char}</span>`;
+					}
+				}
+			}
+			
+			DOM.wordPracticeWord.innerHTML = displayHtml;
+		}
+	},
+
+	// 現在の単語を完了
+	completeCurrentWord() {
+		const currentWord = APP_STATE.wordPracticeWords[APP_STATE.wordPracticeCurrentWord];
+		const input = APP_STATE.inputBuffer.trim();
+		const wordEndTime = Date.now();
+		
+		// 結果を記録
+		const firstKeyTime = APP_STATE.wordPracticeFirstKeyTime - APP_STATE.wordPracticeWordStartTime;
+		const totalWordTime = wordEndTime - APP_STATE.wordPracticeWordStartTime;
+		const isCorrect = input === currentWord;
+		
+		// 個別単語のWPM計算（分間文字数ベース - プロジェクト標準）
+		let wordWPM = 0;
+		if (isCorrect && totalWordTime > 0) {
+			const minutes = totalWordTime / 60000; // ミリ秒を分に変換
+			const characters = currentWord.length;
+			wordWPM = Math.round(characters / minutes); // 分間文字数として計算
+		}
+		
+		const wordResult = {
+			word: currentWord,
+			input: input,
+			correct: isCorrect,
+			firstKeyTime: firstKeyTime,
+			wordTime: totalWordTime,
+			wordWPM: wordWPM
+		};
+		
+		APP_STATE.wordPracticeResults.push(wordResult);
+
+		// 次の単語へ
+		APP_STATE.wordPracticeCurrentWord++;
+		
+		if (APP_STATE.wordPracticeCurrentWord >= APP_STATE.wordPracticeTotalWords) {
+			// 全単語完了
+			this.completeWordPracticePractice();
+		} else {
+			// 次の単語への待機時間（1秒）を設定
+			APP_STATE.wordPracticeState = "waiting_next_word";
+			
+			// 現在の単語表示をクリア
+			if (DOM.wordPracticeWord) {
+				DOM.wordPracticeWord.textContent = "";
+				DOM.wordPracticeWord.className = "word-practice-word";
+				// 最小高さを維持して進捗表示の位置を安定させる（縦長に調整）
+				DOM.wordPracticeWord.style.minHeight = "80px";
+				DOM.wordPracticeWord.style.lineHeight = "80px";
+			}
+			
+			// 正解した場合はタイム表示（Initial Speedモード同様）
+			if (isCorrect && totalWordTime > 0 && DOM.wordPracticeStatus) {
+				DOM.wordPracticeStatus.textContent = Utils.formatReactionTime(totalWordTime);
+				DOM.wordPracticeStatus.className = "word-practice-status completion-time";
+			}
+			
+			// 1秒後に次の単語を表示
+			setTimeout(() => {
+				if (APP_STATE.wordPracticeState === "waiting_next_word") {
+					// タイム表示をクリア
+					if (DOM.wordPracticeStatus) {
+						DOM.wordPracticeStatus.textContent = "";
+						DOM.wordPracticeStatus.className = "word-practice-status";
+					}
+					APP_STATE.wordPracticeState = "practicing";
+					this.displayCurrentWord();
+				}
+			}, 1000);
+		}
+	},
+
+	// Word Practice練習完了
+	completeWordPracticePractice() {
+		APP_STATE.wordPracticeState = "completed";
+
+		// 統計計算
+		const results = APP_STATE.wordPracticeResults;
+		const correctResults = results.filter(r => r.correct);
+		
+		const stats = {
+			averageFirstKeyTime: correctResults.length > 0 ? 
+				Math.round(correctResults.reduce((sum, r) => sum + r.firstKeyTime, 0) / correctResults.length) : 0,
+			averageWordTime: correctResults.length > 0 ? 
+				Math.round(correctResults.reduce((sum, r) => sum + r.wordTime, 0) / correctResults.length) : 0,
+			totalTime: results.reduce((sum, r) => sum + r.wordTime, 0) / 1000,
+			averageWPM: correctResults.length > 0 ? 
+				Math.round(correctResults.reduce((sum, r) => sum + r.wordWPM, 0) / correctResults.length) : 0,
+			accuracy: Math.round((correctResults.length / results.length) * 100),
+			wordCount: results.length
+		};
+
+		// 結果画面表示
+		UI.showWordPracticeResults(stats);
+
+		// オーバーレイ表示
+		UI.hideAllSpecialScreens();
+		UI.showOverlay(correctResults.length, results.length);
+	},
+
+	// Word Practice用のバックスペース処理
+	handleWordPracticeBackspace() {
+		if (APP_STATE.wordPracticeState === "practicing" && APP_STATE.inputBuffer.length > 0) {
+			APP_STATE.inputBuffer = APP_STATE.inputBuffer.slice(0, -1);
+			this.updateWordPracticeDisplay();
 		}
 	},
 };

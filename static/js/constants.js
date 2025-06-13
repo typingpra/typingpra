@@ -103,6 +103,18 @@ const APP_STATE = {
 	initialSpeedCurrentMistakes: [], // Initial Speed専用ミス記録
 	initialSpeedConsecutiveMisses: 0, // 連続ミス回数
 
+	// Word Practice専用状態
+	wordPracticeState: "waiting", // "waiting", "starting", "practicing", "completed"
+	wordPracticeCurrentWord: 0,
+	wordPracticeTotalWords: 10,
+	wordPracticeSet: "top500",
+	wordPracticeWords: [],
+	wordPracticeResults: [], // 詳細結果
+	wordPracticeStartTime: null,
+	wordPracticeWordStartTime: null, // 個別単語の開始時間
+	wordPracticeFirstKeyTime: null, // 最初のキー押下時間
+	wordPracticeFirstKeyPressed: false, // 最初のキーが押されたか
+
 	// UI状態
 	isDarkMode: true,
 	isTextWrapEnabled: false, // テキストラップ状態
@@ -174,6 +186,11 @@ function initializeDOMElements() {
 	DOM.breakTimeEl = document.getElementById("break-time");
 	DOM.breakCharsEl = document.getElementById("break-chars");
 
+	// デフォルト言語モード選択関連のDOM要素
+	DOM.defaultLanguageModeContainer = document.getElementById("default-language-mode-container");
+	DOM.defaultNormalRadio = document.getElementById("default-normal");
+	DOM.defaultTypewellRadio = document.getElementById("default-typewell");
+
 	// カスタムコードモード選択関連のDOM要素
 	DOM.customNormalRadio = document.getElementById("custom-normal");
 	DOM.customTypewellRadio = document.getElementById("custom-typewell");
@@ -233,8 +250,43 @@ function initializeDOMElements() {
 		"initial-speed-detailed-results",
 	);
 
+	// TypeWell関連のDOM要素
+	DOM.typewellResults = document.getElementById("typewell-results");
+	DOM.typewellModeInfo = document.getElementById("typewell-mode-info");
+	DOM.typewellLinesInfo = document.getElementById("typewell-lines-info");
+	DOM.typewellDetailedResults = document.getElementById("typewell-detailed-results");
+
 	// 追加: タイプウェルカウントダウン入力フィールド
 	DOM.typewellCountdownInput = document.getElementById(
 		"typewell-countdown-input",
 	);
+
+	// Word Practice関連のDOM要素
+	DOM.wordPracticeContainer = document.getElementById("word-practice-container");
+	DOM.wordPracticeTop500Radio = document.getElementById("word-practice-top500");
+	DOM.wordPracticeTop1500Radio = document.getElementById("word-practice-top1500");
+	DOM.wordPracticeAllRadio = document.getElementById("word-practice-all");
+	DOM.wordPracticeCountSelect = document.getElementById("word-practice-count");
+	DOM.wordPracticeStartScreen = document.getElementById("word-practice-start-screen");
+	DOM.wordPracticeStartButton = document.getElementById("word-practice-start-button");
+	DOM.wordPracticePracticeScreen = document.getElementById("word-practice-practice-screen");
+	DOM.wordPracticeStatus = document.getElementById("word-practice-status");
+	DOM.wordPracticeWord = document.getElementById("word-practice-word");
+	DOM.wordPracticeProgress = document.getElementById("word-practice-progress");
+	DOM.wordPracticeCountDisplay = document.getElementById("word-practice-count-display");
+	DOM.wordPracticeCurrentSet = document.getElementById("word-practice-current-set");
+	DOM.wordPracticeResults = document.getElementById("word-practice-results");
+	DOM.wordPracticeModeInfo = document.getElementById("word-practice-mode-info");
+	DOM.wordPracticeCountInfo = document.getElementById("word-practice-count-info");
+	DOM.wordPracticeSummary = document.getElementById("word-practice-summary");
+	DOM.wordPracticeDetailedResults = document.getElementById("word-practice-detailed-results");
+
+	// TypeWell English Words関連のDOM要素
+	DOM.typewellEnglishWordsContainer = document.getElementById("typewell-english-words-container");
+	DOM.typewellEnglishWordsTop500Radio = document.getElementById("typewell-english-words-top500");
+	DOM.typewellEnglishWordsTop1500Radio = document.getElementById("typewell-english-words-top1500");
+	DOM.typewellEnglishWordsAllRadio = document.getElementById("typewell-english-words-all");
+	DOM.typewellEnglishWordsStartScreen = document.getElementById("typewell-english-words-start-screen");
+	DOM.typewellEnglishWordsStartButton = document.getElementById("typewell-english-words-start-button");
+	DOM.typewellEnglishWordsCurrentSet = document.getElementById("typewell-english-words-current-set");
 }

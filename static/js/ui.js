@@ -417,6 +417,33 @@ const UI = {
 
 	// Word Practice専用オーバーレイ表示
 	showWordPracticeOverlay(correct, total) {
+		// typing.jsで計算された統計を使用
+		const stats = APP_STATE.wordPracticeStats;
+		if (!stats) {
+			console.error("Word Practice統計が見つかりません");
+			return;
+		}
+
+		// 言語名の設定
+		const selectedSet = Utils.getSelectedWordPracticeSet();
+		const setNames = {
+			'top500': 'Top 500 Words',
+			'top1500': 'Top 1500 Words', 
+			'all': 'All Words'
+		};
+		const languageName = `Word Practice (${setNames[selectedSet] || 'Top 500 Words'})`;
+
+		// 統計を保存（typing.jsで計算された正しい値を使用）
+		Stats.saveResult(
+			languageName,
+			1, // Word Practiceは常にパート1
+			1, // Word Practiceは常に1パート
+			stats.averageWPM, // 正しく計算されたWPM
+			stats.accuracy, // 正しく計算されたAccuracy
+			stats.totalTime, // 正しく計算された時間
+			stats.wordCount // 単語数
+		);
+
 		// Word Practiceリザルトセクションを表示
 		if (DOM.wordPracticeResults) {
 			DOM.wordPracticeResults.style.display = "block";

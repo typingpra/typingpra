@@ -1163,6 +1163,7 @@ const Typing = {
 			APP_STATE.wordPracticeCurrentWord = 0;
 			APP_STATE.wordPracticeWords = [];
 			APP_STATE.wordPracticeResults = [];
+			APP_STATE.wordPracticeStats = null;
 			APP_STATE.wordPracticeWordStartTime = null;
 			APP_STATE.wordPracticeFirstKeyTime = null;
 			APP_STATE.wordPracticeFirstKeyPressed = false;
@@ -2096,6 +2097,9 @@ const Typing = {
 			accuracy: Math.round((correctResults.length / results.length) * 100),
 			wordCount: results.length
 		};
+
+		// 統計をAPP_STATEに保存して、UI.jsで使用できるようにする
+		APP_STATE.wordPracticeStats = stats;
 
 		// 結果画面表示
 		UI.showWordPracticeResults(stats);

@@ -110,6 +110,7 @@ const APP_STATE = {
 	wordPracticeSet: "top500",
 	wordPracticeWords: [],
 	wordPracticeResults: [], // 詳細結果
+	wordPracticeStats: null, // 計算済み統計（UI.jsでの統計保存用）
 	wordPracticeStartTime: null,
 	wordPracticeWordStartTime: null, // 個別単語の開始時間
 	wordPracticeFirstKeyTime: null, // 最初のキー押下時間

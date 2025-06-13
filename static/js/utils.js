@@ -180,53 +180,63 @@ const Utils = {
 		// 選択された単語セットを取得
 		const selectedSet = this.getSelectedTypeWellEnglishWordsSet();
 		
-		// 単語セット別の英単語リスト（仮の実装、後でNGSLデータに置換）
-		const wordSets = {
-			top500: [
-				"the", "be", "to", "of", "and", "a", "in", "that", "have", "it",
-				"for", "not", "on", "with", "as", "you", "do", "at", "this", "but",
-				"his", "by", "from", "they", "she", "or", "an", "will", "my", "one",
-				"all", "would", "there", "their", "what", "so", "up", "out", "if", "about",
-				"who", "get", "which", "go", "me", "when", "make", "can", "like", "time",
-				"no", "just", "him", "know", "take", "people", "into", "year", "your", "good",
-				"some", "could", "them", "see", "other", "than", "then", "now", "look", "only",
-				"come", "its", "over", "think", "also", "back", "after", "use", "two", "how"
-			],
-			top1500: [
-				"our", "work", "first", "well", "way", "even", "new", "want", "because", "any",
-				"these", "give", "day", "most", "us", "is", "water", "long", "very", "after",
-				"where", "much", "before", "move", "right", "boy", "old", "too", "same", "tell",
-				"does", "set", "three", "want", "air", "well", "also", "play", "small", "end"
-			],
-			all: [
-				"place", "around", "large", "every", "turn", "why", "ask", "went", "men", "read",
-				"need", "land", "different", "home", "us", "move", "try", "kind", "hand", "picture",
-				"again", "change", "off", "play", "spell", "air", "away", "animal", "house", "point"
-			]
-		};
+		// words.jsからWORD_SETSを使用（実際のNGSLデータ）
+		if (typeof WORD_SETS === 'undefined') {
+			console.error('WORD_SETS not found. Make sure words.js is loaded.');
+			return "Error: Word data not available";
+		}
 
 		// 選択されたセットの単語を取得
-		const words = wordSets[selectedSet] || wordSets.top500;
+		const words = WORD_SETS[selectedSet]?.words || WORD_SETS.top500?.words || [];
 
 		// ランダム生成器の初期化
 		this._seedXorshift128();
 
+		// Fisher-Yatesシャッフルで単語プールを作成（重複制御）
+		const shuffledWords = [...words]; // コピーを作成
+		for (let i = shuffledWords.length - 1; i > 0; i--) {
+			const j = Math.floor(this._xorshift128() * (i + 1));
+			[shuffledWords[i], shuffledWords[j]] = [shuffledWords[j], shuffledWords[i]];
+		}
+		
+		let wordIndex = 0; // シャッフルされた単語プールのインデックス
+		
+		// 単語選択関数（重複制御付き）
+		const getNextWord = () => {
+			if (wordIndex >= shuffledWords.length) {
+				// プール枯渇時は再シャッフル
+				for (let i = shuffledWords.length - 1; i > 0; i--) {
+					const j = Math.floor(this._xorshift128() * (i + 1));
+					[shuffledWords[i], shuffledWords[j]] = [shuffledWords[j], shuffledWords[i]];
+				}
+				wordIndex = 0;
+			}
+			return shuffledWords[wordIndex++];
+		};
+
 		let result = "";
 		let pendingWordRemainder = ""; // 前の行から継続する単語の残り部分
-		let currentPosition = 0; // 全体の文字位置
+		let pendingSpaceNeeded = false; // 次の行の最初にスペースが必要かどうか
 
 		for (let line = 0; line < TOTAL_LINES; line++) {
 			let lineContent = "";
 			let currentLineLength = 0;
 
+			// 前の行からスペースが必要な場合、行の最初にスペースを追加
+			if (pendingSpaceNeeded && currentLineLength < CHARS_PER_LINE) {
+				lineContent += " ";
+				currentLineLength++;
+				pendingSpaceNeeded = false;
+			}
+
 			// 前の行から継続する単語の残り部分がある場合、それから開始
 			if (pendingWordRemainder) {
-				const remainderLength = Math.min(pendingWordRemainder.length, CHARS_PER_LINE);
+				const remainderLength = Math.min(pendingWordRemainder.length, CHARS_PER_LINE - currentLineLength);
 				lineContent += pendingWordRemainder.substring(0, remainderLength);
 				currentLineLength += remainderLength;
 				
 				// 残り部分が行に収まった場合
-				if (pendingWordRemainder.length <= CHARS_PER_LINE) {
+				if (pendingWordRemainder.length <= (CHARS_PER_LINE - currentLineLength + remainderLength)) {
 					pendingWordRemainder = "";
 					// 単語完了後はスペースを追加（行に余裕があれば）
 					if (currentLineLength < CHARS_PER_LINE) {
@@ -241,9 +251,8 @@ const Utils = {
 
 			// 行に余裕がある間、新しい単語を追加
 			while (currentLineLength < CHARS_PER_LINE && !pendingWordRemainder) {
-				// ランダムに単語を選択
-				const randomIndex = Math.floor(this._xorshift128() * words.length);
-				const word = words[randomIndex];
+				// シャッフルされたプールから単語を選択
+				const word = getNextWord();
 				
 				// 単語 + スペースの長さを計算
 				const wordWithSpace = word + " ";
@@ -276,7 +285,21 @@ const Utils = {
 							lineContent += word.substring(0, remainingChars);
 							currentLineLength = CHARS_PER_LINE;
 							pendingWordRemainder = word.substring(remainingChars);
+							// 単語分割時は次の行でスペースが必要
+							pendingSpaceNeeded = false; // 単語が継続する場合はスペース不要
 						}
+					}
+				}
+				
+				// 行末で単語が完了した場合、次の行でスペースが必要
+				if (currentLineLength == CHARS_PER_LINE && !pendingWordRemainder && line < TOTAL_LINES - 1) {
+					// 現在の行が単語で終わった場合、次の行の最初にスペースが必要
+					if (lineContent.endsWith(" ")) {
+						// 既にスペースで終わっている場合は不要
+						pendingSpaceNeeded = false;
+					} else {
+						// 単語で終わっている場合は次行でスペースが必要
+						pendingSpaceNeeded = true;
 					}
 				}
 			}
@@ -342,6 +365,25 @@ const Utils = {
 		const top500Radio = document.getElementById("typewell-english-words-top500");
 		const top1500Radio = document.getElementById("typewell-english-words-top1500");
 		const allRadio = document.getElementById("typewell-english-words-all");
+
+		if (top500Radio && top500Radio.checked) return "top500";
+		if (top1500Radio && top1500Radio.checked) return "top1500";
+		if (allRadio && allRadio.checked) return "all";
+
+		// デフォルトはTOP500
+		return "top500";
+	},
+
+	// 選択されたWord Practice単語セットを取得
+	getSelectedWordPracticeSet() {
+		// DOMが存在しない場合はデフォルトを返す
+		if (typeof document === "undefined") {
+			return "top500";
+		}
+
+		const top500Radio = document.getElementById("word-practice-top500");
+		const top1500Radio = document.getElementById("word-practice-top1500");
+		const allRadio = document.getElementById("word-practice-all");
 
 		if (top500Radio && top500Radio.checked) return "top500";
 		if (top1500Radio && top1500Radio.checked) return "top1500";

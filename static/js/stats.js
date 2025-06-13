@@ -43,6 +43,19 @@ const Stats = {
 				wpm: wpm, // WPM換算値（参考）
 				detailedResults: APP_STATE.initialSpeedResults || [],
 			});
+		} else if (language.startsWith("Word Practice")) {
+			// Word Practiceモードの場合は特別な形式で保存
+			partData.attempts.push({
+				attemptNumber: attemptNumber,
+				timestamp: new Date().toISOString(),
+				wpm: wpm,
+				accuracy: accuracy,
+				time: time,
+				wordCount: characters, // 単語数
+				wordsPerMinute: Math.round((characters / time) * 60), // 単語/分
+				averageWordTime: time / characters, // 平均単語入力時間
+				detailedWordResults: APP_STATE.wordPracticeResults || [],
+			});
 		} else {
 			partData.attempts.push({
 				attemptNumber: attemptNumber,
@@ -87,6 +100,23 @@ const Stats = {
 				time: attempt.averageTime, // 平均反応時間
 				accuracy: attempt.accuracy,
 				trials: attempt.trials,
+				timestamp: attempt.timestamp,
+				attemptNumber: attempt.attemptNumber,
+			}));
+		} else if (language.startsWith("Word Practice")) {
+			// Word PracticeモードはWPMでソート
+			sortedAttempts = [...partData.attempts]
+				.filter((attempt) => attempt.wpm > 0) // 有効な記録のみ
+				.sort((a, b) => b.wpm - a.wpm) // 降順ソート（速い方が上位）
+				.slice(0, 3);
+
+			return sortedAttempts.map((attempt, index) => ({
+				rank: index + 1,
+				wpm: attempt.wpm,
+				accuracy: attempt.accuracy,
+				time: attempt.time,
+				wordCount: attempt.wordCount,
+				wordsPerMinute: attempt.wordsPerMinute,
 				timestamp: attempt.timestamp,
 				attemptNumber: attempt.attemptNumber,
 			}));

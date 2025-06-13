@@ -316,7 +316,10 @@ function setupEventListeners() {
 		if (e.key === "Escape") {
 			e.preventDefault();
 			// Word Practice練習中の場合は画面をクリア
-			if (DOM.langSel.value === "word-practice" && APP_STATE.wordPracticeState === "practicing") {
+			if (
+				DOM.langSel.value === "word-practice" &&
+				APP_STATE.wordPracticeState === "practicing"
+			) {
 				APP_STATE.wordPracticeState = "waiting";
 				// 単語表示をクリア
 				if (DOM.wordPracticeWord) {
@@ -388,6 +391,10 @@ function setupEventListeners() {
 			) {
 				if (e.key === "Enter" || e.key === " " || e.key.length === 1) {
 					e.preventDefault();
+					// スペースでゲーム開始時に言語選択からフォーカスを外す
+					if (e.key === " " && APP_STATE.initialSpeedState === "waiting") {
+						DOM.langSel.blur();
+					}
 					Typing.handleKeyPress(e.key);
 				}
 				return;
@@ -397,7 +404,10 @@ function setupEventListeners() {
 		}
 
 		// タイプウェルオリジナルモードまたはTypeWell English Wordsモードの特別処理
-		if (DOM.langSel.value === "typewell" || DOM.langSel.value === "typewell-english-words") {
+		if (
+			DOM.langSel.value === "typewell" ||
+			DOM.langSel.value === "typewell-english-words"
+		) {
 			// 待機中またはカウントダウン中の場合はTyping.handleKeyPressに委譲
 			if (
 				APP_STATE.typewellState === "waiting" ||
@@ -406,6 +416,10 @@ function setupEventListeners() {
 				if (e.key === "Enter" || e.key === " " || e.key.length === 1) {
 					// スペースキー対応を追加
 					e.preventDefault();
+					// スペースでゲーム開始時に言語選択からフォーカスを外す
+					if (e.key === " " && APP_STATE.typewellState === "waiting") {
+						DOM.langSel.blur();
+					}
 					Typing.handleKeyPress(e.key);
 				}
 				return;
@@ -419,6 +433,10 @@ function setupEventListeners() {
 			if (APP_STATE.wordPracticeState === "waiting") {
 				if (e.key === "Enter" || e.key === " ") {
 					e.preventDefault();
+					// スペースでゲーム開始時に言語選択からフォーカスを外す
+					if (e.key === " ") {
+						DOM.langSel.blur();
+					}
 					Typing.startWordPracticeFromClick();
 				}
 				return;
@@ -436,11 +454,19 @@ function setupEventListeners() {
 			return;
 		}
 
+		// 通常のプログラミング言語モードでスペースキーを押した場合の処理を追加
+		// タイマーが開始されていない場合でスペースキーが押された場合、言語選択からフォーカスを外す
+		if (e.key === " " && !APP_STATE.startTime) {
+			DOM.langSel.blur();
+		}
+
 		// タイマーが開始されていない場合は開始（Initial Speedまたはタイプウェルのタイピング状態の場合のみ）
 		if (
 			!APP_STATE.startTime &&
 			!Typing.isInitialSpeedMode() &&
-			((DOM.langSel.value !== "typewell" && DOM.langSel.value !== "typewell-english-words") || APP_STATE.typewellState === "typing")
+			((DOM.langSel.value !== "typewell" &&
+				DOM.langSel.value !== "typewell-english-words") ||
+				APP_STATE.typewellState === "typing")
 		) {
 			Typing.startTimer();
 		}
@@ -474,10 +500,12 @@ function initializeRadioButtons() {
 						if (DOM.typewellMixedRadio) DOM.typewellMixedRadio.checked = true;
 						break;
 					case "symbols":
-						if (DOM.typewellSymbolsRadio) DOM.typewellSymbolsRadio.checked = true;
+						if (DOM.typewellSymbolsRadio)
+							DOM.typewellSymbolsRadio.checked = true;
 						break;
 					case "numbers":
-						if (DOM.typewellNumbersRadio) DOM.typewellNumbersRadio.checked = true;
+						if (DOM.typewellNumbersRadio)
+							DOM.typewellNumbersRadio.checked = true;
 						break;
 				}
 				UI.handleTypeWellModeChange();
@@ -498,10 +526,12 @@ function initializeRadioButtons() {
 						DOM.typewellEnglishWordsTop500Radio.checked = true;
 						break;
 					case "top1500":
-						if (DOM.typewellEnglishWordsTop1500Radio) DOM.typewellEnglishWordsTop1500Radio.checked = true;
+						if (DOM.typewellEnglishWordsTop1500Radio)
+							DOM.typewellEnglishWordsTop1500Radio.checked = true;
 						break;
 					case "all":
-						if (DOM.typewellEnglishWordsAllRadio) DOM.typewellEnglishWordsAllRadio.checked = true;
+						if (DOM.typewellEnglishWordsAllRadio)
+							DOM.typewellEnglishWordsAllRadio.checked = true;
 						break;
 				}
 				UI.handleTypeWellEnglishWordsSetChange();
@@ -522,7 +552,8 @@ function initializeRadioButtons() {
 						DOM.initialSpeedLowercaseRadio.checked = true;
 						break;
 					case "numbers":
-						if (DOM.initialSpeedNumbersRadio) DOM.initialSpeedNumbersRadio.checked = true;
+						if (DOM.initialSpeedNumbersRadio)
+							DOM.initialSpeedNumbersRadio.checked = true;
 						break;
 				}
 				UI.handleInitialSpeedModeChange();

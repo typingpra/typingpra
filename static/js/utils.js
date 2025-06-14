@@ -290,22 +290,24 @@ const Utils = {
 						}
 					}
 				}
-				
-				// 行末で単語が完了した場合、次の行でスペースが必要
-				if (currentLineLength == CHARS_PER_LINE && !pendingWordRemainder && line < TOTAL_LINES - 1) {
-					// 現在の行が単語で終わった場合、次の行の最初にスペースが必要
-					if (lineContent.endsWith(" ")) {
-						// 既にスペースで終わっている場合は不要
-						pendingSpaceNeeded = false;
-					} else {
-						// 単語で終わっている場合は次行でスペースが必要
-						pendingSpaceNeeded = true;
-					}
-				}
 			}
 
 			// 行の内容を正確に50文字にする
 			lineContent = lineContent.substring(0, CHARS_PER_LINE);
+			
+			// 行末でのスペース必要判定を改善（単語が継続しない場合のみ）
+			if (line < TOTAL_LINES - 1 && !pendingWordRemainder) {
+				// 単語が次の行に継続しない場合のみ、スペース要否を判定
+				const lastChar = lineContent[lineContent.length - 1];
+				if (lastChar && lastChar !== " ") {
+					// 最後の文字がスペース以外（単語）で完了している場合、次行でスペースが必要
+					pendingSpaceNeeded = true;
+				} else {
+					// 最後の文字がスペースの場合、次行でスペースは不要
+					pendingSpaceNeeded = false;
+				}
+			}
+
 			result += lineContent;
 
 			// 最後の行以外は改行を追加

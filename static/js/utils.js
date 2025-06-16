@@ -419,6 +419,7 @@ const Utils = {
 		const numbersRadio = document.getElementById("initial-speed-numbers");
 		const leftHandRadio = document.getElementById("initial-speed-lefthand");
 		const rightHandRadio = document.getElementById("initial-speed-righthand");
+		const handPrimitiveRadio = document.getElementById("initial-speed-hand-primitive");
 
 		if (lowercaseRadio && lowercaseRadio.checked)
 			return CONSTANTS.INITIAL_SPEED_SETTINGS.MODES.LOWERCASE;
@@ -428,6 +429,8 @@ const Utils = {
 			return CONSTANTS.INITIAL_SPEED_SETTINGS.MODES.LEFT_HAND;
 		if (rightHandRadio && rightHandRadio.checked)
 			return CONSTANTS.INITIAL_SPEED_SETTINGS.MODES.RIGHT_HAND;
+		if (handPrimitiveRadio && handPrimitiveRadio.checked)
+			return CONSTANTS.INITIAL_SPEED_SETTINGS.MODES.HAND_PRIMITIVE;
 
 		// デフォルトは小文字+記号
 		return CONSTANTS.INITIAL_SPEED_SETTINGS.MODES.LOWERCASE;
@@ -444,6 +447,8 @@ const Utils = {
 				return "Left Hand";
 			case CONSTANTS.INITIAL_SPEED_SETTINGS.MODES.RIGHT_HAND:
 				return "Right Hand";
+			case CONSTANTS.INITIAL_SPEED_SETTINGS.MODES.HAND_PRIMITIVE:
+				return "Hand Primitive";
 			default:
 				return "Unknown Mode";
 		}

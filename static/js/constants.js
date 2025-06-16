@@ -35,12 +35,14 @@ const CONSTANTS = {
 			NUMBERS: "numbers",
 			LEFT_HAND: "lefthand",
 			RIGHT_HAND: "righthand",
+			HAND_PRIMITIVE: "hand_primitive",
 		},
 		CHARACTER_SETS: {
 			lowercase: "abcdefghijklmnopqrstuvwxyz,.",
 			numbers: "0123456789",
 			lefthand: "qwertasdfgzxcvb",
 			righthand: "yuiophjklnm,.",
+			hand_primitive: "qwertasdfgzxcvbyuiophjklnm,.",
 		},
 		MIN_TRIALS: 5,
 		MAX_TRIALS: 20,
@@ -227,6 +229,9 @@ function initializeDOMElements() {
 	);
 	DOM.initialSpeedRightHandRadio = document.getElementById(
 		"initial-speed-righthand",
+	);
+	DOM.initialSpeedHandPrimitiveRadio = document.getElementById(
+		"initial-speed-hand-primitive",
 	);
 	DOM.initialSpeedTrialsSelect = document.getElementById(
 		"initial-speed-trials",

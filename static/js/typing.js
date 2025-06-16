@@ -389,10 +389,27 @@ const Typing = {
 		const expectedChar = APP_STATE.initialSpeedCurrentChar;
 		const reactionTime = Date.now() - APP_STATE.initialSpeedStartTime;
 
-		// 大文字小文字を区別しない照合（英字の場合のみ）
-		const isMatch = /[a-zA-Z]/.test(expectedChar) 
-			? inputChar.toLowerCase() === expectedChar.toLowerCase()
-			: inputChar === expectedChar;
+		// 原始的反射モードの判定
+		const currentMode = APP_STATE.initialSpeedMode;
+		let isMatch = false;
+
+		if (currentMode === CONSTANTS.INITIAL_SPEED_SETTINGS.MODES.HAND_PRIMITIVE) {
+			// 原始的反射モード: 同じ手のセット内なら正解
+			const leftHandSet = CONSTANTS.INITIAL_SPEED_SETTINGS.CHARACTER_SETS.lefthand;
+			const rightHandSet = CONSTANTS.INITIAL_SPEED_SETTINGS.CHARACTER_SETS.righthand;
+			
+			const expectedInLeftHand = leftHandSet.includes(expectedChar.toLowerCase());
+			const inputInLeftHand = leftHandSet.includes(inputChar.toLowerCase());
+			const expectedInRightHand = rightHandSet.includes(expectedChar.toLowerCase());
+			const inputInRightHand = rightHandSet.includes(inputChar.toLowerCase());
+			
+			isMatch = (expectedInLeftHand && inputInLeftHand) || (expectedInRightHand && inputInRightHand);
+		} else {
+			// 通常モード: 大文字小文字を区別しない照合（英字の場合のみ）
+			isMatch = /[a-zA-Z]/.test(expectedChar) 
+				? inputChar.toLowerCase() === expectedChar.toLowerCase()
+				: inputChar === expectedChar;
+		}
 
 		if (isMatch) {
 			// 正解 - 連続ミスカウンターをリセット

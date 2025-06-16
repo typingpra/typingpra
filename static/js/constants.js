@@ -33,10 +33,14 @@ const CONSTANTS = {
 		MODES: {
 			LOWERCASE: "lowercase",
 			NUMBERS: "numbers",
+			LEFT_HAND: "lefthand",
+			RIGHT_HAND: "righthand",
 		},
 		CHARACTER_SETS: {
 			lowercase: "abcdefghijklmnopqrstuvwxyz,.",
 			numbers: "0123456789",
+			lefthand: "qwertasdfgzxcvb",
+			righthand: "yuiophjklnm,.",
 		},
 		MIN_TRIALS: 5,
 		MAX_TRIALS: 20,
@@ -217,6 +221,12 @@ function initializeDOMElements() {
 	);
 	DOM.initialSpeedNumbersRadio = document.getElementById(
 		"initial-speed-numbers",
+	);
+	DOM.initialSpeedLeftHandRadio = document.getElementById(
+		"initial-speed-lefthand",
+	);
+	DOM.initialSpeedRightHandRadio = document.getElementById(
+		"initial-speed-righthand",
 	);
 	DOM.initialSpeedTrialsSelect = document.getElementById(
 		"initial-speed-trials",

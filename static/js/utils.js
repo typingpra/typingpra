@@ -417,11 +417,17 @@ const Utils = {
 
 		const lowercaseRadio = document.getElementById("initial-speed-lowercase");
 		const numbersRadio = document.getElementById("initial-speed-numbers");
+		const leftHandRadio = document.getElementById("initial-speed-lefthand");
+		const rightHandRadio = document.getElementById("initial-speed-righthand");
 
 		if (lowercaseRadio && lowercaseRadio.checked)
 			return CONSTANTS.INITIAL_SPEED_SETTINGS.MODES.LOWERCASE;
 		if (numbersRadio && numbersRadio.checked)
 			return CONSTANTS.INITIAL_SPEED_SETTINGS.MODES.NUMBERS;
+		if (leftHandRadio && leftHandRadio.checked)
+			return CONSTANTS.INITIAL_SPEED_SETTINGS.MODES.LEFT_HAND;
+		if (rightHandRadio && rightHandRadio.checked)
+			return CONSTANTS.INITIAL_SPEED_SETTINGS.MODES.RIGHT_HAND;
 
 		// デフォルトは小文字+記号
 		return CONSTANTS.INITIAL_SPEED_SETTINGS.MODES.LOWERCASE;
@@ -434,6 +440,10 @@ const Utils = {
 				return "Lowercase + Punctuation";
 			case CONSTANTS.INITIAL_SPEED_SETTINGS.MODES.NUMBERS:
 				return "Numbers Only";
+			case CONSTANTS.INITIAL_SPEED_SETTINGS.MODES.LEFT_HAND:
+				return "Left Hand";
+			case CONSTANTS.INITIAL_SPEED_SETTINGS.MODES.RIGHT_HAND:
+				return "Right Hand";
 			default:
 				return "Unknown Mode";
 		}
